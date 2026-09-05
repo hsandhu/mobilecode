@@ -188,13 +188,13 @@ function StatusPopoverView(props: { state: StatusPopoverState }) {
       triggerProps={{
         variant: "ghost-muted",
         size: "large",
-        class: "!w-9 shrink-0",
+        class: "!size-8 shrink-0",
         state: props.state.shown ? "pressed" : undefined,
         "aria-label": props.state.label,
       }}
       trigger={
-        <div class="relative size-4">
-          <IconV2 name={props.state.shown ? "status-active" : "status"} />
+        <div class="relative size-5">
+          <IconV2 name={props.state.shown ? "status-active" : "status"} size="large" />
           <div
             class={`absolute -top-1 -right-1 size-2 rounded-full border border-[var(--v2-background-bg-deep)] ${serverStatusDotClass(props.state)}`}
           />
