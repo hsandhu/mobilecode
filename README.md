@@ -3,6 +3,10 @@
 
 MobileCode is a fork of [opencode](https://github.com/anomalyco/opencode) that knows about mobile projects. When it detects an iOS or Android project it can run the simulator or emulator preview server and render the live device inside the app, next to your session.
 
+<p align="center">
+  <img src=".github/assets/mobilecode-demo.gif" alt="MobileCode building and running an iOS app in the embedded simulator" width="100%">
+</p>
+
 - **iOS**: detects Xcode projects and workspaces, CocoaPods, and Expo apps, then runs [serve-sim](https://github.com/EvanBacon/serve-sim) and embeds the iOS Simulator stream.
 - **Android**: detects Gradle projects and Expo apps, then runs [serve-avd](https://github.com/hsandhu/serve-avd) and embeds the Android Emulator stream.
 - Everything else opencode does: terminal UI, desktop app, web UI, any model provider, MCP, plugins, and skills.

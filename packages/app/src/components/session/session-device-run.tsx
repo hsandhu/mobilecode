@@ -2,13 +2,15 @@ import type { DevicePreview } from "@opencode-ai/schema/device-preview"
 import { AppIcon } from "@opencode-ai/ui/app-icon"
 import { Spinner } from "@opencode-ai/ui/spinner"
 import { Tooltip } from "@opencode-ai/ui/tooltip"
-import { For, Show, createMemo } from "solid-js"
+import { ButtonV2 } from "@opencode-ai/ui/v2/button-v2"
+import { For, Show, createEffect, createMemo } from "solid-js"
 import { useLanguage } from "@/context/language"
+import { showToast } from "@/utils/toast"
 import { createDeviceState, deviceBuildBusy, devicePreviewIcon } from "./device-state"
 
 function PlayGlyph() {
   return (
-    <svg viewBox="0 0 16 16" class="size-3.5" aria-hidden="true">
+    <svg viewBox="0 0 16 16" class="size-[18px] shrink-0" aria-hidden="true">
       <path d="M4.5 3.2 12.5 8l-8 4.8V3.2Z" fill="currentColor" />
     </svg>
   )
@@ -16,7 +18,7 @@ function PlayGlyph() {
 
 function StopGlyph() {
   return (
-    <svg viewBox="0 0 16 16" class="size-3.5" aria-hidden="true">
+    <svg viewBox="0 0 16 16" class="size-[18px] shrink-0" aria-hidden="true">
       <rect x="4" y="4" width="8" height="8" rx="1" fill="currentColor" />
     </svg>
   )
@@ -52,9 +54,29 @@ export function SessionDeviceRun() {
     if (deviceBuildBusy(build)) return { text: build.step ?? language.t("session.device.run.building"), failed: false }
   })
 
+  // A build can fail in well under a second, so the titlebar alone is easy to miss. Announce the
+  // transition into failure, but never the failure that was already there when the session opened.
+  const seen = new Map<DevicePreview.Platform, DevicePreview.BuildStatus>()
+  createEffect(() => {
+    for (const platform of device.platforms()) {
+      const build = device.build(platform)
+      if (!build) continue
+      const previous = seen.get(platform)
+      seen.set(platform, build.status)
+      if (build.status !== "failed" || previous === undefined || previous === "failed") continue
+      const title = language.t("session.device.run.failed")
+      const detail = build.error?.replace(/\.$/, "")
+      showToast({
+        variant: "error",
+        title,
+        description: detail && detail !== title ? build.error : label(platform),
+      })
+    }
+  })
+
   return (
     <Show when={device.platforms().length > 0}>
-      <div class="flex items-center gap-1.5" data-component="device-run">
+      <div class="flex items-center gap-2" data-component="device-run">
         <Show when={status()}>
           {(value) => (
             <div class="hidden md:flex items-center gap-1.5 min-w-0">
@@ -83,11 +105,12 @@ export function SessionDeviceRun() {
                 : language.t("session.device.run.play", { platform: label(platform) })
             return (
               <Tooltip value={title()} placement="bottom" class="flex items-center">
-                <button
+                <ButtonV2
                   type="button"
                   aria-label={title()}
-                  class="flex items-center gap-1 h-6 px-1.5 rounded-md hover:bg-surface-raised-base-hover cursor-default"
-                  classList={{ "text-text-danger-base": stoppable(), "text-text-base": !stoppable() }}
+                  size="large"
+                  variant={stoppable() ? "danger" : "neutral"}
+                  class="!px-2.5"
                   onClick={() => {
                     if (stoppable()) {
                       void device.stopApp(platform)
@@ -96,11 +119,15 @@ export function SessionDeviceRun() {
                     void device.runApp(platform)
                   }}
                 >
-                  <AppIcon id={devicePreviewIcon(platform)} style={{ width: "14px", height: "14px" }} />
+                  <AppIcon
+                    id={devicePreviewIcon(platform)}
+                    class="shrink-0"
+                    style={{ width: "20px", height: "20px" }}
+                  />
                   <Show when={stoppable()} fallback={<PlayGlyph />}>
                     <StopGlyph />
                   </Show>
-                </button>
+                </ButtonV2>
               </Tooltip>
             )
           }}

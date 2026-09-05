@@ -533,8 +533,6 @@ type SessionHeaderV2ActionsState = {
 }
 
 function SessionHeaderV2Actions(props: { state: SessionHeaderV2ActionsState }) {
-  const language = useLanguage()
-
   return (
     <div class="flex items-center gap-2">
       <Show when={props.state.statusVisible}>
@@ -559,13 +557,13 @@ function SessionHeaderV2Actions(props: { state: SessionHeaderV2ActionsState }) {
             type="button"
             variant="ghost-muted"
             size="large"
-            class="!w-9 shrink-0"
+            class="!size-8 shrink-0"
             state={props.state.reviewOpened ? "pressed" : undefined}
             onClick={props.state.onReviewToggle}
             aria-label={props.state.reviewLabel}
             aria-expanded={props.state.reviewOpened}
             aria-controls="review-panel"
-            icon={<IconV2 name="sidebar-right" />}
+            icon={<IconV2 name="sidebar-right" size="large" />}
           />
         </TooltipV2>
       </Show>
