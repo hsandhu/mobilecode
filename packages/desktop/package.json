@@ -4,9 +4,9 @@
   "version": "1.18.29",
   "type": "module",
   "license": "MIT",
-  "homepage": "https://opencode.ai",
+  "homepage": "https://github.com/hsandhu/mobilecode",
   "author": {
-    "name": "OpenCode",
+    "name": "MobileCode",
     "email": "hello@opencode.ai"
   },
   "scripts": {
