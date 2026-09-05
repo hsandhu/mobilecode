@@ -15,9 +15,11 @@ import {
   type DragEvent,
 } from "@thisbeyond/solid-dnd"
 import { Tabs } from "@opencode-ai/ui/tabs"
+import { AppIcon } from "@opencode-ai/ui/app-icon"
+import { Button } from "@opencode-ai/ui/button"
 import { IconButton } from "@opencode-ai/ui/icon-button"
 import { Icon } from "@opencode-ai/ui/icon"
-import { TooltipKeybind } from "@opencode-ai/ui/tooltip"
+import { Tooltip, TooltipKeybind } from "@opencode-ai/ui/tooltip"
 import { ResizeHandle } from "@opencode-ai/ui/resize-handle"
 import { Mark } from "@opencode-ai/ui/logo"
 import { IconButtonV2 } from "@opencode-ai/ui/v2/icon-button-v2"
@@ -35,7 +37,8 @@ import { SessionContextUsage } from "@/components/session-context-usage"
 const reviewTabID = "session-side-panel-review-tab"
 const reviewTabPanelID = "session-side-panel-review-tabpanel"
 const fileBrowserTabPanelID = "session-side-panel-file-browser-tabpanel"
-import { SessionContextTab, SortableTab, SortableTabV2, FileVisual } from "@/components/session"
+import { SessionContextTab, SessionDeviceTab, SortableTab, SortableTabV2, FileVisual } from "@/components/session"
+import { createDeviceState, devicePreviewIcon } from "@/components/session/device-state"
 import { OpenInAppV2 } from "@/components/session/open-in-app-v2"
 import { useCommand } from "@/context/command"
 import { useFile, type SelectedLineRange } from "@/context/file"
@@ -182,6 +185,8 @@ export function SessionSidePanel(props: {
     fileBrowser: () => !!props.fileBrowserState,
   })
   const contextOpen = tabState.contextOpen
+  const deviceOpen = tabState.deviceOpen
+  const devicePlatforms = createDeviceState().platforms
   const openFileOpen = tabState.openFileOpen
   const panelTabs = tabState.panelTabs
   const openedTabs = tabState.openedTabs
@@ -222,6 +227,26 @@ export function SessionSidePanel(props: {
     openReviewPanel()
     tabs().setActive(next)
   }
+  const openDeviceTab = () => {
+    openReviewPanel()
+    void tabs().open("device")
+    tabs().setActive("device")
+  }
+  command.register("session-device", () => [
+    {
+      id: "session.device.toggle",
+      title: language.t("command.session.device"),
+      category: language.t("command.category.view"),
+      disabled: devicePlatforms().length === 0 && !deviceOpen(),
+      onSelect: () => {
+        if (deviceOpen()) {
+          tabs().close("device")
+          return
+        }
+        openDeviceTab()
+      },
+    },
+  ])
   const browserTab = createMemo(() => {
     if (!props.fileBrowserState) return undefined
     const active = activeTab()
@@ -238,7 +263,7 @@ export function SessionSidePanel(props: {
   })
   const fileBrowserVisible = createMemo(() => {
     const active = activeTab()
-    return active !== "review" && active !== "context" && active !== "empty"
+    return active !== "review" && active !== "context" && active !== "device" && active !== "empty"
   })
   const openFileKeybind = createMemo(() => command.keybindParts("file.open"))
   const closeTabKeybind = createMemo(() => command.keybindParts("tab.close"))
@@ -391,6 +416,41 @@ export function SessionSidePanel(props: {
                                   </div>
                                 </Tabs.Trigger>
                               </Show>
+                              <Show when={deviceOpen()}>
+                                <Tabs.Trigger
+                                  value="device"
+                                  closeButton={
+                                    <TooltipKeybind
+                                      title={language.t("common.closeTab")}
+                                      keybind={command.keybind("tab.close")}
+                                      placement="bottom"
+                                      gutter={10}
+                                    >
+                                      <IconButton
+                                        icon="close-small"
+                                        variant="ghost"
+                                        class="h-5 w-5"
+                                        onClick={() => tabs().close("device")}
+                                        aria-label={language.t("common.closeTab")}
+                                      />
+                                    </TooltipKeybind>
+                                  }
+                                  hideCloseButton
+                                  onMiddleClick={() => tabs().close("device")}
+                                >
+                                  <div class="flex items-center gap-1.5">
+                                    <Show when={devicePlatforms()[0]}>
+                                      {(platform) => (
+                                        <AppIcon
+                                          id={devicePreviewIcon(platform())}
+                                          style={{ width: "14px", height: "14px" }}
+                                        />
+                                      )}
+                                    </Show>
+                                    <div>{language.t("session.tab.device")}</div>
+                                  </div>
+                                </Tabs.Trigger>
+                              </Show>
                               <SortableProvider ids={openedTabs()}>
                                 <For each={panelTabs()}>
                                   {(tab) => (
@@ -442,6 +502,28 @@ export function SessionSidePanel(props: {
                                   "bg-background-stronger": !settings.general.newLayoutDesigns(),
                                 }}
                               >
+                                <Show when={!deviceOpen() && devicePlatforms()[0]}>
+                                  {(platform) => (
+                                    <Tooltip
+                                      value={language.t("command.session.device")}
+                                      placement="bottom"
+                                      class="flex items-center"
+                                    >
+                                      <Button
+                                        variant="ghost"
+                                        size="small"
+                                        class="!rounded-md"
+                                        onClick={openDeviceTab}
+                                        aria-label={language.t("command.session.device")}
+                                      >
+                                        <AppIcon
+                                          id={devicePreviewIcon(platform())}
+                                          style={{ width: "16px", height: "16px" }}
+                                        />
+                                      </Button>
+                                    </Tooltip>
+                                  )}
+                                </Show>
                                 <TooltipKeybind
                                   title={language.t("command.file.open")}
                                   keybind={command.keybind("file.open")}
@@ -495,6 +577,12 @@ export function SessionSidePanel(props: {
                               <div class="relative pt-2 flex-1 min-h-0 overflow-hidden">
                                 <SessionContextTab />
                               </div>
+                            </Tabs.Content>
+                          </Show>
+
+                          <Show when={activeTab() === "device"}>
+                            <Tabs.Content value="device" class="flex flex-col h-full overflow-hidden contain-strict">
+                              <SessionDeviceTab />
                             </Tabs.Content>
                           </Show>
 
@@ -605,6 +693,47 @@ export function SessionSidePanel(props: {
                                 </div>
                               </Tabs.Trigger>
                             </Show>
+                            <Show when={deviceOpen()}>
+                              <Tabs.Trigger
+                                value="device"
+                                closeButton={
+                                  <TooltipV2
+                                    value={
+                                      <>
+                                        {language.t("common.closeTab")}
+                                        <Show when={closeTabKeybind().length > 0}>
+                                          <KeybindV2 keys={closeTabKeybind()} variant="neutral" />
+                                        </Show>
+                                      </>
+                                    }
+                                    placement="bottom"
+                                    gutter={10}
+                                  >
+                                    <IconButton
+                                      icon="close-small"
+                                      variant="ghost"
+                                      class="h-5 w-5"
+                                      onClick={() => tabs().close("device")}
+                                      aria-label={language.t("common.closeTab")}
+                                    />
+                                  </TooltipV2>
+                                }
+                                hideCloseButton
+                                onMiddleClick={() => tabs().close("device")}
+                              >
+                                <div class="flex items-center gap-1.5">
+                                  <Show when={devicePlatforms()[0]}>
+                                    {(platform) => (
+                                      <AppIcon
+                                        id={devicePreviewIcon(platform())}
+                                        style={{ width: "14px", height: "14px" }}
+                                      />
+                                    )}
+                                  </Show>
+                                  <div>{language.t("session.tab.device")}</div>
+                                </div>
+                              </Tabs.Trigger>
+                            </Show>
                             <For each={panelTabs()}>
                               {(tab) => (
                                 <Show
@@ -661,6 +790,25 @@ export function SessionSidePanel(props: {
                                 "bg-background-stronger": !settings.general.newLayoutDesigns(),
                               }}
                             >
+                              <Show when={!deviceOpen() && devicePlatforms()[0]}>
+                                {(platform) => (
+                                  <TooltipV2
+                                    value={language.t("command.session.device")}
+                                    placement="bottom"
+                                    class="flex items-center"
+                                  >
+                                    <IconButtonV2
+                                      icon={
+                                        <AppIcon id={devicePreviewIcon(platform())} style={{ width: "16px", height: "16px" }} />
+                                      }
+                                      variant="ghost-muted"
+                                      size="large"
+                                      onClick={openDeviceTab}
+                                      aria-label={language.t("command.session.device")}
+                                    />
+                                  </TooltipV2>
+                                )}
+                              </Show>
                               <TooltipV2
                                 value={
                                   <>
@@ -723,6 +871,12 @@ export function SessionSidePanel(props: {
                             <div class="relative pt-2 flex-1 min-h-0 overflow-hidden">
                               <SessionContextTab />
                             </div>
+                          </Tabs.Content>
+                        </Show>
+
+                        <Show when={activeTab() === "device"}>
+                          <Tabs.Content value="device" class="flex flex-col h-full overflow-hidden contain-strict">
+                            <SessionDeviceTab />
                           </Tabs.Content>
                         </Show>
 

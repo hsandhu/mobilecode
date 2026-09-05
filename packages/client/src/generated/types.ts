@@ -2805,3 +2805,197 @@ export type ProjectCopiesRefreshInput = {
 }
 
 export type ProjectCopiesRefreshOutput = void
+
+export type DevicePreviewGetInput = {
+  readonly location?: {
+    readonly location?: { readonly directory?: string | undefined; readonly workspace?: string | undefined } | undefined
+  }["location"]
+}
+
+export type DevicePreviewGetOutput = {
+  readonly location: {
+    readonly directory: string
+    readonly workspaceID?: string
+    readonly project: { readonly id: string; readonly directory: string }
+  }
+  readonly data: {
+    readonly platforms: ReadonlyArray<"ios" | "android">
+    readonly servers: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly status: "starting" | "running" | "exited"
+      readonly command: string
+      readonly url?: string
+      readonly pid?: number
+      readonly exitCode?: number
+      readonly log: ReadonlyArray<string>
+    }>
+    readonly builds: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly status: "idle" | "building" | "installing" | "launching" | "running" | "failed"
+      readonly directory?: string
+      readonly target?: string
+      readonly appID?: string
+      readonly step?: string
+      readonly error?: string
+      readonly log: ReadonlyArray<string>
+      readonly startedAt?: number
+      readonly finishedAt?: number
+    }>
+  }
+}
+
+export type DevicePreviewStartInput = {
+  readonly location?: {
+    readonly location?: { readonly directory?: string | undefined; readonly workspace?: string | undefined } | undefined
+  }["location"]
+  readonly platform: { readonly platform: "ios" | "android" }["platform"]
+}
+
+export type DevicePreviewStartOutput = {
+  readonly location: {
+    readonly directory: string
+    readonly workspaceID?: string
+    readonly project: { readonly id: string; readonly directory: string }
+  }
+  readonly data: {
+    readonly platforms: ReadonlyArray<"ios" | "android">
+    readonly servers: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly status: "starting" | "running" | "exited"
+      readonly command: string
+      readonly url?: string
+      readonly pid?: number
+      readonly exitCode?: number
+      readonly log: ReadonlyArray<string>
+    }>
+    readonly builds: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly status: "idle" | "building" | "installing" | "launching" | "running" | "failed"
+      readonly directory?: string
+      readonly target?: string
+      readonly appID?: string
+      readonly step?: string
+      readonly error?: string
+      readonly log: ReadonlyArray<string>
+      readonly startedAt?: number
+      readonly finishedAt?: number
+    }>
+  }
+}
+
+export type DevicePreviewStopInput = {
+  readonly location?: {
+    readonly location?: { readonly directory?: string | undefined; readonly workspace?: string | undefined } | undefined
+  }["location"]
+  readonly platform: { readonly platform: "ios" | "android" }["platform"]
+}
+
+export type DevicePreviewStopOutput = {
+  readonly location: {
+    readonly directory: string
+    readonly workspaceID?: string
+    readonly project: { readonly id: string; readonly directory: string }
+  }
+  readonly data: {
+    readonly platforms: ReadonlyArray<"ios" | "android">
+    readonly servers: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly status: "starting" | "running" | "exited"
+      readonly command: string
+      readonly url?: string
+      readonly pid?: number
+      readonly exitCode?: number
+      readonly log: ReadonlyArray<string>
+    }>
+    readonly builds: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly status: "idle" | "building" | "installing" | "launching" | "running" | "failed"
+      readonly directory?: string
+      readonly target?: string
+      readonly appID?: string
+      readonly step?: string
+      readonly error?: string
+      readonly log: ReadonlyArray<string>
+      readonly startedAt?: number
+      readonly finishedAt?: number
+    }>
+  }
+}
+
+export type DevicePreviewRunAppInput = {
+  readonly location?: {
+    readonly location?: { readonly directory?: string | undefined; readonly workspace?: string | undefined } | undefined
+  }["location"]
+  readonly platform: { readonly platform: "ios" | "android" }["platform"]
+}
+
+export type DevicePreviewRunAppOutput = {
+  readonly location: {
+    readonly directory: string
+    readonly workspaceID?: string
+    readonly project: { readonly id: string; readonly directory: string }
+  }
+  readonly data: {
+    readonly platforms: ReadonlyArray<"ios" | "android">
+    readonly servers: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly status: "starting" | "running" | "exited"
+      readonly command: string
+      readonly url?: string
+      readonly pid?: number
+      readonly exitCode?: number
+      readonly log: ReadonlyArray<string>
+    }>
+    readonly builds: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly status: "idle" | "building" | "installing" | "launching" | "running" | "failed"
+      readonly directory?: string
+      readonly target?: string
+      readonly appID?: string
+      readonly step?: string
+      readonly error?: string
+      readonly log: ReadonlyArray<string>
+      readonly startedAt?: number
+      readonly finishedAt?: number
+    }>
+  }
+}
+
+export type DevicePreviewStopAppInput = {
+  readonly location?: {
+    readonly location?: { readonly directory?: string | undefined; readonly workspace?: string | undefined } | undefined
+  }["location"]
+  readonly platform: { readonly platform: "ios" | "android" }["platform"]
+}
+
+export type DevicePreviewStopAppOutput = {
+  readonly location: {
+    readonly directory: string
+    readonly workspaceID?: string
+    readonly project: { readonly id: string; readonly directory: string }
+  }
+  readonly data: {
+    readonly platforms: ReadonlyArray<"ios" | "android">
+    readonly servers: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly status: "starting" | "running" | "exited"
+      readonly command: string
+      readonly url?: string
+      readonly pid?: number
+      readonly exitCode?: number
+      readonly log: ReadonlyArray<string>
+    }>
+    readonly builds: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly status: "idle" | "building" | "installing" | "launching" | "running" | "failed"
+      readonly directory?: string
+      readonly target?: string
+      readonly appID?: string
+      readonly step?: string
+      readonly error?: string
+      readonly log: ReadonlyArray<string>
+      readonly startedAt?: number
+      readonly finishedAt?: number
+    }>
+  }
+}

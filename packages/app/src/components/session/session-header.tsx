@@ -27,6 +27,7 @@ import { decode64 } from "@/utils/base64"
 import { fileManagerApp } from "@/utils/file-manager"
 import { Persist, persisted } from "@/utils/persist"
 import { StatusPopover, StatusPopoverV2 } from "../status-popover"
+import { SessionDeviceRun } from "./session-device-run"
 import { IconButtonV2 } from "@opencode-ai/ui/v2/icon-button-v2"
 import { Icon as IconV2 } from "@opencode-ai/ui/v2/icon"
 import { KeybindV2 } from "@opencode-ai/ui/v2/keybind-v2"
@@ -322,6 +323,7 @@ export function SessionHeader() {
       <Show when={rightMount()} keyed>
         {(mount) => (
           <Portal mount={mount}>
+            <SessionDeviceRun />
             <Show
               when={isV2}
               fallback={

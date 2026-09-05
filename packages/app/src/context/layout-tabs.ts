@@ -56,6 +56,14 @@ export function openSessionTab(current: SessionTabState, tab: string): SessionTa
     }
   }
 
+  // Pinned like context: never replaces a temporary file preview tab.
+  if (tab === "device") {
+    return {
+      tabs: { all: current.tabs.all.includes(tab) ? current.tabs.all : [...current.tabs.all, tab], active: tab },
+      preview,
+    }
+  }
+
   const previewIndex = preview ? current.tabs.all.indexOf(preview) : -1
   const existingIndex = current.tabs.all.indexOf(tab)
   if (existingIndex !== -1) {

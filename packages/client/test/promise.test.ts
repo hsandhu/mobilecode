@@ -23,6 +23,7 @@ test("exposes every standard HTTP API group", () => {
     "questions",
     "references",
     "projectCopies",
+    "devicePreview",
   ])
   expect(Object.keys(client.messages)).toEqual(["list"])
   expect(Object.keys(client.integrations)).toEqual([
@@ -36,6 +37,7 @@ test("exposes every standard HTTP API group", () => {
   ])
   expect(Object.keys(client.files)).toEqual(["list", "find"])
   expect(Object.keys(client.ptys)).toEqual(["list", "create", "get", "update", "remove"])
+  expect(Object.keys(client.devicePreview)).toEqual(["get", "start", "stop", "runApp", "stopApp"])
 })
 
 test("sessions.get returns the wire projection", async () => {

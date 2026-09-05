@@ -1,5 +1,7 @@
 export { SessionHeader } from "./session-header"
 export { SessionContextTab } from "./session-context-tab"
+export { SessionDeviceTab } from "./session-device-tab"
+export { SessionDeviceRun } from "./session-device-run"
 export { SortableTab, FileVisual } from "./session-sortable-tab"
 export { SortableTabV2 } from "./session-sortable-tab-v2"
 export { SortableTerminalTab } from "./session-sortable-terminal-tab"
