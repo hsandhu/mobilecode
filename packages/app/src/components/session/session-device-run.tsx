@@ -49,8 +49,7 @@ export function SessionDeviceRun() {
     if (!build) return
     if (build.status === "failed") return { text: build.error ?? language.t("session.device.run.failed"), failed: true }
     if (build.status === "running") return { text: language.t("session.device.run.running"), failed: false }
-    if (deviceBuildBusy(build))
-      return { text: build.step ?? language.t("session.device.run.building"), failed: false }
+    if (deviceBuildBusy(build)) return { text: build.step ?? language.t("session.device.run.building"), failed: false }
   })
 
   return (
@@ -58,12 +57,12 @@ export function SessionDeviceRun() {
       <div class="flex items-center gap-1.5" data-component="device-run">
         <Show when={status()}>
           {(value) => (
-            <div class="hidden lg:flex items-center gap-1.5 min-w-0">
+            <div class="hidden md:flex items-center gap-1.5 min-w-0">
               <Show when={!value().failed && deviceBuildBusy(device.build(active()))}>
                 <Spinner class="size-3 shrink-0" />
               </Show>
               <span
-                class="text-11-regular truncate max-w-[180px]"
+                class="text-11-regular truncate max-w-[150px]"
                 classList={{ "text-text-weak": !value().failed, "text-text-danger-base": value().failed }}
                 title={value().text}
               >
