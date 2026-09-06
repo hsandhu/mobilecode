@@ -12,7 +12,7 @@ No Apple secrets are required while builds are unsigned. macOS auto-update is in
 
 ## Create a release
 
-Open **Actions → Release macOS → Run workflow**, choose `dev`, and choose whether to publish immediately. The workflow reads the version from `packages/opencode/package.json` and creates the matching tag. For example, OpenCode version `1.18.29` produces `v1.18.29`. Reruns accept that tag only when it still points to the selected commit.
+Open **Actions → Release macOS → Run workflow**, choose `dev`, and choose whether to publish immediately. The workflow reads the version from `packages/opencode/package.json` and creates the matching tag. For example, OpenCode version `1.18.29` produces `v1.18.29`. If an unpublished tag or draft release already exists for that version, a manual run safely moves the tag to the selected commit. Published release tags remain immutable.
 
 Pushing a `v*` tag is also supported and creates a draft release for review, but the tag version must match `packages/opencode/package.json`.
 
