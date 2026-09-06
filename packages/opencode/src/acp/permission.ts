@@ -148,6 +148,9 @@ function permissionTitle(toolName: string, input: ToolInput) {
     case "websearch":
       return stringValue(input.query)
 
+    case "device_run":
+      return [stringValue(input.action), stringValue(input.platform)].filter(Boolean).join(" ") || undefined
+
     case "grep":
     case "glob":
       return stringValue(input.pattern)

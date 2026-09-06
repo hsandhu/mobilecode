@@ -26,6 +26,7 @@ const AVAILABLE_PERMISSIONS = [
   "task",
   "todowrite",
   "websearch",
+  "device_run",
   "lsp",
   "skill",
 ]

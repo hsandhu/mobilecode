@@ -1167,4 +1167,11 @@ export const dict = {
   "session.device.run.failed": "Build failed",
   "session.device.showLog": "Log",
   "session.device.hideLog": "Hide log",
+  "session.device.run.playAll": "Build and run on all devices",
+  "session.device.run.stopAll": "Stop running on all devices",
+  "session.device.bundler.starting": "Starting Metro…",
+  "session.device.bundler.running": "Metro running at {{url}}",
+  "session.device.bundler.exited": "Metro exited",
+  "session.device.bundler.idle": "Metro is not running. It starts with the first build.",
+  "session.device.bundler.label": "Metro",
 }

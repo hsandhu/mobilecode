@@ -710,19 +710,25 @@ type Endpoint18_3Request = Parameters<RawClient["server.devicePreview"]["deviceP
 type Endpoint18_3Input = {
   readonly location?: Endpoint18_3Request["query"]["location"]
   readonly platform: Endpoint18_3Request["payload"]["platform"]
+  readonly relaunch?: Endpoint18_3Request["payload"]["relaunch"]
 }
 const Endpoint18_3 = (raw: RawClient["server.devicePreview"]) => (input: Endpoint18_3Input) =>
   raw["devicePreview.runApp"]({
     query: { location: input["location"] },
-    payload: { platform: input["platform"] },
+    payload: { platform: input["platform"], relaunch: input["relaunch"] },
   }).pipe(Effect.mapError(mapClientError))
 
-type Endpoint18_4Request = Parameters<RawClient["server.devicePreview"]["devicePreview.stopApp"]>[0]
-type Endpoint18_4Input = {
-  readonly location?: Endpoint18_4Request["query"]["location"]
-  readonly platform: Endpoint18_4Request["payload"]["platform"]
+type Endpoint18_4Request = Parameters<RawClient["server.devicePreview"]["devicePreview.focus"]>[0]
+type Endpoint18_4Input = { readonly location?: Endpoint18_4Request["query"]["location"] }
+const Endpoint18_4 = (raw: RawClient["server.devicePreview"]) => (input?: Endpoint18_4Input) =>
+  raw["devicePreview.focus"]({ query: { location: input?.["location"] } }).pipe(Effect.mapError(mapClientError))
+
+type Endpoint18_5Request = Parameters<RawClient["server.devicePreview"]["devicePreview.stopApp"]>[0]
+type Endpoint18_5Input = {
+  readonly location?: Endpoint18_5Request["query"]["location"]
+  readonly platform: Endpoint18_5Request["payload"]["platform"]
 }
-const Endpoint18_4 = (raw: RawClient["server.devicePreview"]) => (input: Endpoint18_4Input) =>
+const Endpoint18_5 = (raw: RawClient["server.devicePreview"]) => (input: Endpoint18_5Input) =>
   raw["devicePreview.stopApp"]({
     query: { location: input["location"] },
     payload: { platform: input["platform"] },
@@ -733,7 +739,8 @@ const adaptGroup18 = (raw: RawClient["server.devicePreview"]) => ({
   start: Endpoint18_1(raw),
   stop: Endpoint18_2(raw),
   runApp: Endpoint18_3(raw),
-  stopApp: Endpoint18_4(raw),
+  focus: Endpoint18_4(raw),
+  stopApp: Endpoint18_5(raw),
 })
 
 const adaptClient = (raw: RawClient) => ({

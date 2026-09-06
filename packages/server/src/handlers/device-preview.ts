@@ -35,7 +35,21 @@ export const DevicePreviewHandler = HttpApiBuilder.group(Api, "server.devicePrev
           Effect.gen(function* () {
             const location = yield* Location.Service
             const env = yield* environment.get({ directory: location.directory, cwd: location.directory })
-            return yield* preview.runApp({ directory: location.directory, platform: ctx.payload.platform, env })
+            return yield* preview.runApp({
+              directory: location.directory,
+              platform: ctx.payload.platform,
+              relaunch: ctx.payload.relaunch,
+              env,
+            })
+          }),
+        ),
+      )
+      .handle("devicePreview.focus", () =>
+        response(
+          Effect.gen(function* () {
+            const location = yield* Location.Service
+            const env = yield* environment.get({ directory: location.directory, cwd: location.directory })
+            return yield* preview.focus({ directory: location.directory, env })
           }),
         ),
       )

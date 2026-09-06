@@ -39,6 +39,7 @@ export function createDevicePreviewApi(input: { server: ServerConnection.HttpBas
       request("/api/device-preview/stop", directory, { method: "POST", body: JSON.stringify({ platform }) }),
     runApp: (directory: string, platform: DevicePreview.Platform) =>
       request("/api/device-preview/run", directory, { method: "POST", body: JSON.stringify({ platform }) }),
+    focus: (directory: string) => request("/api/device-preview/focus", directory, { method: "POST" }),
     stopApp: (directory: string, platform: DevicePreview.Platform) =>
       request("/api/device-preview/run/stop", directory, { method: "POST", body: JSON.stringify({ platform }) }),
   }
