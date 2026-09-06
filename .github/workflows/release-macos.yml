@@ -66,20 +66,28 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Create or verify tag
+      - name: Create or refresh draft tag
         if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           TAG="${{ steps.version.outputs.tag }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
             TAG_COMMIT="$(git rev-list -n 1 "$TAG")"
             if [ "$TAG_COMMIT" != "$GITHUB_SHA" ]; then
-              echo "Tag $TAG already points to $TAG_COMMIT, not the selected commit $GITHUB_SHA"
-              exit 1
+              RELEASE_DRAFT="$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq ".[] | select(.tag_name == \"$TAG\") | .draft")"
+              if [ "$RELEASE_DRAFT" = "false" ]; then
+                echo "Published release $TAG cannot be moved. Sync to a newer OpenCode version before releasing again."
+                exit 1
+              fi
+              TAG_OBJECT="$(git rev-parse "refs/tags/$TAG")"
+              git tag -fa "$TAG" "$GITHUB_SHA" -m "MobileCode $TAG"
+              git push --force-with-lease="refs/tags/$TAG:$TAG_OBJECT" origin "refs/tags/$TAG"
             fi
           else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git tag -a "$TAG" -m "MobileCode $TAG"
             git push origin "$TAG"
           fi
@@ -88,7 +96,7 @@ jobs:
       - uses: ./.github/actions/setup-bun
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "22"
 
