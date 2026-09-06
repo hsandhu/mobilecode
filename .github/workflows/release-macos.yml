@@ -1,0 +1,131 @@
+name: Release macOS
+
+# Builds the MobileCode desktop app for Apple silicon and attaches it to a GitHub release.
+#
+# Two ways to run it:
+#   - Push a tag matching packages/opencode/package.json.
+#   - Run it manually. The workflow reads that version and creates the matching tag.
+#
+# The release is created as a draft so it can be reviewed, then published from the GitHub UI
+# (or pass publish=true). The zip and latest-mac.yml are what the in-app updater reads, so keep
+# the asset names electron-builder chooses.
+#
+# Builds are intentionally unsigned for now. Users must right-click the app and choose Open
+# the first time they launch it.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish the release immediately instead of leaving it as a draft"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency: release-macos-${{ github.ref }}
+
+jobs:
+  build:
+    if: github.repository == 'hsandhu/mobilecode'
+    runs-on: macos-15
+    timeout-minutes: 90
+    env:
+      OPENCODE_CHANNEL: prod
+      MOBILECODE_UPDATER_ENABLED: "false"
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version
+        id: version
+        run: |
+          set -euo pipefail
+          PACKAGE_VERSION="$(node -p "require('./packages/opencode/package.json').version")"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="$PACKAGE_VERSION"
+          fi
+          if [[ ! "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "Version must be a stable SemVer such as 1.2.3, got '$VERSION'"
+            exit 1
+          fi
+          if [ "$VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "Release version $VERSION must match OpenCode version $PACKAGE_VERSION"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create or verify tag
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.version.outputs.tag }}"
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            TAG_COMMIT="$(git rev-list -n 1 "$TAG")"
+            if [ "$TAG_COMMIT" != "$GITHUB_SHA" ]; then
+              echo "Tag $TAG already points to $TAG_COMMIT, not the selected commit $GITHUB_SHA"
+              exit 1
+            fi
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$TAG" -m "MobileCode $TAG"
+            git push origin "$TAG"
+          fi
+          git checkout --detach "$TAG"
+
+      - uses: ./.github/actions/setup-bun
+
+      - name: Test desktop
+        working-directory: packages/desktop
+        run: bun test
+
+      - name: Typecheck desktop
+        working-directory: packages/desktop
+        run: bun typecheck
+
+      - name: Prepare
+        working-directory: packages/desktop
+        run: bun ./scripts/prepare.ts
+        env:
+          OPENCODE_VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Build
+        working-directory: packages/desktop
+        run: bun run build
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+          OPENCODE_VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Package and attach to release
+        working-directory: packages/desktop
+        run: bun x electron-builder --mac --arm64 --publish always --config electron-builder.config.ts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Keep the artifacts on the run too
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: mobilecode-desktop-mac-arm64
+          path: |
+            packages/desktop/dist/*.dmg
+            packages/desktop/dist/*.zip
+            packages/desktop/dist/latest-mac.yml
+          if-no-files-found: error
+
+      - name: Publish release
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        run: gh release edit "${{ steps.version.outputs.tag }}" --draft=false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

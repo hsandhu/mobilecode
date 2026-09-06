@@ -1,4 +1,5 @@
 import * as http from "node:http"
+import { join } from "node:path"
 import * as tls from "node:tls"
 
 type NodeHttpWithEnvProxy = typeof http & {
@@ -84,7 +85,10 @@ function prepareSidecarEnv(password: string, userDataPath: string) {
   Object.assign(process.env, {
     OPENCODE_SERVER_USERNAME: "opencode",
     OPENCODE_SERVER_PASSWORD: password,
-    XDG_STATE_HOME: process.env.XDG_STATE_HOME ?? userDataPath,
+    XDG_DATA_HOME: join(userDataPath, "data"),
+    XDG_CONFIG_HOME: join(userDataPath, "config"),
+    XDG_CACHE_HOME: join(userDataPath, "cache"),
+    XDG_STATE_HOME: join(userDataPath, "state"),
   })
 }
 

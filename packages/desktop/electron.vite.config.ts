@@ -35,6 +35,9 @@ export default defineConfig({
   main: {
     define: {
       "import.meta.env.OPENCODE_CHANNEL": JSON.stringify(channel),
+      "import.meta.env.MOBILECODE_UPDATER_ENABLED": JSON.stringify(
+        process.env.MOBILECODE_UPDATER_ENABLED === "true" ? "true" : "false",
+      ),
     },
     build: {
       rollupOptions: {
