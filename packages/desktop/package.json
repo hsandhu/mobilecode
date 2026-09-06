@@ -2,12 +2,12 @@
   "name": "@opencode-ai/desktop",
   "private": true,
   "version": "1.18.29",
+  "description": "MobileCode desktop app with embedded iOS and Android previews",
   "type": "module",
   "license": "MIT",
   "homepage": "https://github.com/hsandhu/mobilecode",
   "author": {
-    "name": "MobileCode",
-    "email": "hello@opencode.ai"
+    "name": "MobileCode contributors"
   },
   "scripts": {
     "typecheck": "tsgo -b",

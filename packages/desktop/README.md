@@ -1,6 +1,6 @@
-# OpenCode Desktop
+# MobileCode Desktop
 
-The OpenCode Desktop app, built with Electron.
+The MobileCode desktop app, built with Electron and kept close to the upstream OpenCode desktop package.
 
 ## Development
 

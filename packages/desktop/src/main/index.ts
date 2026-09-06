@@ -11,6 +11,7 @@ import { app, BrowserWindow } from "electron"
 import { Deferred, Effect, Fiber } from "effect"
 import contextMenu from "electron-context-menu"
 
+import { DESKTOP_APP_IDS, DESKTOP_APP_NAMES } from "../../product"
 import type { ServerReadyData } from "../preload/types"
 import { checkAppExists, resolveAppPath } from "./apps"
 import { CHANNEL } from "./constants"
@@ -50,16 +51,6 @@ import { cleanupStoreFiles } from "./store-cleanup"
 import { startBackgroundCli } from "./background-cli"
 import { setNativeTranslations } from "./native-translations"
 
-const APP_NAMES: Record<string, string> = {
-  dev: "MobileCode Dev",
-  beta: "MobileCode Beta",
-  prod: "MobileCode",
-}
-const APP_IDS: Record<string, string> = {
-  dev: "dev.mobilecode.desktop.dev",
-  beta: "dev.mobilecode.desktop.beta",
-  prod: "dev.mobilecode.desktop",
-}
 const TEST_ONBOARDING = process.env.OPENCODE_TEST_ONBOARDING === "1"
 const SIDECAR_VERSION = process.env.OPENCODE_SIDECAR_V2 === "1" ? "v2" : "v1"
 const jsCallStackFeature = "DocumentPolicyIncludeJSCallStacksInCrashReports"
@@ -122,11 +113,11 @@ const main = Effect.gen(function* () {
 
   process.env.OPENCODE_DISABLE_EMBEDDED_WEB_UI = "true"
 
-  const appId = app.isPackaged ? APP_IDS[CHANNEL] : "ai.opencode.desktop.dev"
+  const appId = app.isPackaged ? DESKTOP_APP_IDS[CHANNEL] : DESKTOP_APP_IDS.dev
   const onboardingTestRoot = ((): string | undefined => {
     if (!TEST_ONBOARDING) return
 
-    const root = join(tmpdir(), `opencode-onboarding-${randomUUID()}`)
+    const root = join(tmpdir(), `mobilecode-onboarding-${randomUUID()}`)
     rmSync(root, { recursive: true, force: true })
     ;["data", "config", "cache", "state", "desktop", "session"].forEach((dir) =>
       mkdirSync(join(root, dir), { recursive: true }),
@@ -138,13 +129,11 @@ const main = Effect.gen(function* () {
     process.env.XDG_STATE_HOME = join(root, "state")
     return root
   })()
-  app.setName(app.isPackaged ? APP_NAMES[CHANNEL] : "MobileCode Dev")
+  app.setName(app.isPackaged ? DESKTOP_APP_NAMES[CHANNEL] : DESKTOP_APP_NAMES.dev)
   app.setAppUserModelId(appId)
-  app.setPath(
-    "userData",
-    onboardingTestRoot ? join(onboardingTestRoot, "desktop") : join(app.getPath("appData"), appId),
-  )
-  if (onboardingTestRoot) app.setPath("sessionData", join(onboardingTestRoot, "session"))
+  const userDataPath = onboardingTestRoot ? join(onboardingTestRoot, "desktop") : join(app.getPath("appData"), appId)
+  app.setPath("userData", userDataPath)
+  app.setPath("sessionData", onboardingTestRoot ? join(onboardingTestRoot, "session") : join(userDataPath, "session"))
   initializeOldLayoutEligibility(app.getPath("userData"))
   logger = initLogging()
   initCrashReporter()
@@ -200,7 +189,7 @@ const main = Effect.gen(function* () {
     return
   }
 
-  const shellEnv = preferAppEnv(app.getPath("userData"))
+  preferAppEnv(app.getPath("userData"))
 
   app.on("second-instance", (_event: Event, argv: string[]) => {
     const urls = argv.filter((arg: string) => arg.startsWith("mobilecode://"))
@@ -332,7 +321,7 @@ const main = Effect.gen(function* () {
 
     if (SIDECAR_VERSION === "v2") {
       logger.log("spawning v2 sidecar")
-      const sidecar = yield* Effect.promise(() => startBackgroundCli(logger, shellEnv?.XDG_STATE_HOME))
+      const sidecar = yield* Effect.promise(() => startBackgroundCli(logger))
       yield* Deferred.succeed(serverReady, {
         url: sidecar.url,
         username: sidecar.username,

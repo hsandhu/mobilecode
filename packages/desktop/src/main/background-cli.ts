@@ -8,15 +8,14 @@ import { app } from "electron"
 
 const execFileAsync = promisify(execFile)
 const root = dirname(fileURLToPath(import.meta.url))
-const stateHome = process.env.XDG_STATE_HOME
-const desktopStateNames = ["ai.opencode.desktop.dev", "ai.opencode.desktop.beta", "ai.opencode.desktop"]
 
 type Logger = {
   log(message: string, meta?: Record<string, unknown>): void
   error(message: string, meta?: Record<string, unknown>): void
 }
 
-export async function startBackgroundCli(logger: Logger, shellStateHome?: string) {
+export async function startBackgroundCli(logger: Logger) {
+  const stateHome = join(app.getPath("userData"), "state")
   const bundled = app.isPackaged
     ? join(process.resourcesPath, executableName())
     : join(root, "../../resources", executableName())
@@ -24,29 +23,19 @@ export async function startBackgroundCli(logger: Logger, shellStateHome?: string
   const version = await run(bundled, ["--version"], logger)
   const binary = app.isPackaged ? await installCli(bundled, version, logger) : bundled
 
-  const candidates = [
-    ...new Set([stateHome, shellStateHome, ...desktopStateNames.map((name) => join(app.getPath("appData"), name))]),
-  ].filter((candidate) => candidate === undefined || existsSync(candidate))
-  const discovered = await Promise.all(
-    candidates.map(async (candidate) => ({
-      stateHome: candidate,
-      url: serviceUrl(await run(binary, ["service", "status"], logger, { stateHome: candidate })),
-    })),
-  )
-  const found = discovered.find((candidate) => candidate.url !== undefined)
+  const existing = serviceUrl(await run(binary, ["service", "status"], logger, { stateHome }))
   logger.log("v2 CLI background instance checked", {
-    detected: Boolean(found),
-    ...endpoint(found?.url),
+    detected: Boolean(existing),
+    ...endpoint(existing),
   })
 
-  const daemonStateHome = found?.stateHome ?? stateHome
-  const url = await run(binary, ["service", "start"], logger, { stateHome: daemonStateHome })
+  const url = await run(binary, ["service", "start"], logger, { stateHome })
   const password = await run(binary, ["service", "get", "password"], logger, {
     redact: true,
-    stateHome: daemonStateHome,
+    stateHome,
   })
   logger.log("v2 CLI background service ready", {
-    existing: Boolean(found),
+    existing: Boolean(existing),
     username: "opencode",
     ...endpoint(url),
   })

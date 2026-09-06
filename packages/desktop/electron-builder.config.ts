@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
 
 import type { Configuration } from "electron-builder"
+import { DESKTOP_APP_IDS, DESKTOP_APP_NAMES } from "./product"
 
 const execFileAsync = promisify(execFile)
 const packageDir = path.dirname(fileURLToPath(import.meta.url))
@@ -24,17 +25,16 @@ async function signWindows(configuration: { path: string }) {
   )
 }
 
+// A build without an Apple Developer identity still has to produce an app: skip signing and
+// notarization when the workflow (or a local run) turns identity discovery off.
+const signing = process.env.CSC_IDENTITY_AUTO_DISCOVERY !== "false"
+const notarize = signing && Boolean(process.env.APPLE_API_KEY)
+
 const channel = (() => {
   const raw = process.env.OPENCODE_CHANNEL
   if (raw === "dev" || raw === "beta" || raw === "prod") return raw
   return "dev"
 })()
-
-const APP_IDS = {
-  dev: "dev.mobilecode.desktop.dev",
-  beta: "dev.mobilecode.desktop.beta",
-  prod: "dev.mobilecode.desktop",
-} as const
 
 const getBase = (appId: string): Configuration => ({
   artifactName: "mobilecode-desktop-${os}-${arch}.${ext}",
@@ -48,6 +48,9 @@ const getBase = (appId: string): Configuration => ({
   // https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html
   // https://www.electron.build/docs/linux/
   extraMetadata: {
+    // electron-updater derives its cache directory from the package name. Keep downloads
+    // isolated from OpenCode even though workspace package names stay upstream-compatible.
+    name: "mobilecode-desktop",
     desktopName: `${appId}.desktop`,
   },
   files: ["out/**/*", "resources/**/*", "!resources/mobilecode-cli*"],
@@ -74,11 +77,11 @@ const getBase = (appId: string): Configuration => ({
     gatekeeperAssess: false,
     entitlements: "resources/entitlements.plist",
     entitlementsInherit: "resources/entitlements.plist",
-    notarize: true,
+    notarize,
     target: ["dmg", "zip"],
   },
   dmg: {
-    sign: true,
+    sign: signing,
   },
   protocols: {
     name: "MobileCode",
@@ -114,7 +117,7 @@ const getBase = (appId: string): Configuration => ({
 })
 
 function getConfig() {
-  const appId = APP_IDS[channel]
+  const appId = DESKTOP_APP_IDS[channel]
   const base = getBase(appId)
 
   switch (channel) {
@@ -122,7 +125,7 @@ function getConfig() {
       return {
         ...base,
         appId,
-        productName: "MobileCode Dev",
+        productName: DESKTOP_APP_NAMES.dev,
         deb: { fpm: [metainfoFpm(appId)] },
         rpm: { packageName: "mobilecode-dev", fpm: [metainfoFpm(appId)] },
       }
@@ -131,7 +134,7 @@ function getConfig() {
       return {
         ...base,
         appId,
-        productName: "MobileCode Beta",
+        productName: DESKTOP_APP_NAMES.beta,
         protocols: { name: "MobileCode Beta", schemes: ["mobilecode"] },
         publish: { provider: "github", owner: "hsandhu", repo: "mobilecode-beta", channel: "latest" },
         deb: { fpm: [metainfoFpm(appId)] },
@@ -142,7 +145,7 @@ function getConfig() {
       return {
         ...base,
         appId,
-        productName: "MobileCode",
+        productName: DESKTOP_APP_NAMES.prod,
         protocols: { name: "MobileCode", schemes: ["mobilecode"] },
         publish: { provider: "github", owner: "hsandhu", repo: "mobilecode", channel: "latest" },
         deb: { fpm: [metainfoFpm(appId)] },

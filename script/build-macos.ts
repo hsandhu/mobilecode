@@ -35,7 +35,9 @@ const value = (name: string) => {
 }
 
 const known = ["--channel", "--arch", "--sign", "--skip-install", "--help", "-h"]
-const unknown = args.find((arg) => arg.startsWith("-") && !known.some((flag) => arg === flag || arg.startsWith(`${flag}=`)))
+const unknown = args.find(
+  (arg) => arg.startsWith("-") && !known.some((flag) => arg === flag || arg.startsWith(`${flag}=`)),
+)
 if (unknown) {
   console.error(`Unknown option: ${unknown}\n\n${usage}`)
   process.exit(1)
@@ -61,39 +63,43 @@ if (process.platform !== "darwin") {
 const root = path.resolve(import.meta.dir, "..")
 const desktop = path.join(root, "packages", "desktop")
 
-// electron-vite, electron-builder and @electron/rebuild all run under Node, and Vite needs
-// Node 20.19+. Prefer whatever is on PATH and fall back to the newest nvm install.
+// electron-builder loads ESM dependencies through require(), which Node supports from 22.12.
+// Prefer whatever is on PATH and fall back to the newest compatible nvm install.
 function ensureNode() {
   const version = (binary: string) => {
     const result = Bun.spawnSync([binary, "--version"], { stdout: "pipe", stderr: "ignore" })
     if (!result.success) return undefined
-    const major = Number(/^v(\d+)/.exec(result.stdout.toString().trim())?.[1])
-    return Number.isInteger(major) ? major : undefined
+    const parsed = /^v(\d+)\.(\d+)/.exec(result.stdout.toString().trim())
+    if (!parsed) return undefined
+    return { major: Number(parsed[1]), minor: Number(parsed[2]), label: result.stdout.toString().trim() }
   }
 
   const current = version("node")
-  if (current !== undefined && current >= 20) return current
+  if (current && (current.major > 22 || (current.major === 22 && current.minor >= 12))) return current.label
 
   const versions = path.join(os.homedir(), ".nvm", "versions", "node")
   const candidates = existsSync(versions)
     ? readdirSync(versions)
-        .map((name) => ({ name, major: Number(/^v(\d+)/.exec(name)?.[1]) }))
-        .filter((entry) => Number.isInteger(entry.major) && entry.major >= 20)
-        .sort((a, b) => b.major - a.major)
+        .map((name) => ({ name, version: version(path.join(versions, name, "bin", "node")) }))
+        .filter((entry) =>
+          Boolean(
+            entry.version && (entry.version.major > 22 || (entry.version.major === 22 && entry.version.minor >= 12)),
+          ),
+        )
+        .sort((a, b) => b.name.localeCompare(a.name, undefined, { numeric: true }))
     : []
 
   for (const candidate of candidates) {
     const bin = path.join(versions, candidate.name, "bin")
-    if (!existsSync(path.join(bin, "node"))) continue
     process.env["PATH"] = `${bin}:${process.env["PATH"] ?? ""}`
     console.log(`  using Node ${candidate.name} from nvm`)
-    return candidate.major
+    return candidate.name
   }
 
   console.error(
     current === undefined
-      ? "Node.js was not found on PATH. Install Node 20 or newer and try again."
-      : `Node ${current} is too old. This build needs Node 20 or newer; install one and try again.`,
+      ? "Node.js was not found on PATH. Install Node 22.12 or newer and try again."
+      : `Node ${current.label} is too old. This build needs Node 22.12 or newer; install one and try again.`,
   )
   process.exit(1)
 }
@@ -105,6 +111,7 @@ const node = ensureNode()
 console.log(`  node ${node}, bun ${Bun.version}, channel ${channel}, arch ${arch}`)
 
 process.env["OPENCODE_CHANNEL"] = channel
+process.env["MOBILECODE_UPDATER_ENABLED"] = args.includes("--sign") ? "true" : "false"
 if (!args.includes("--sign")) {
   // Ad-hoc signing only. Gatekeeper will ask on first launch.
   process.env["CSC_IDENTITY_AUTO_DISCOVERY"] = "false"
