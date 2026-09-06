@@ -53,7 +53,7 @@ export const DevicePreviewGroup = HttpApiGroup.make("server.devicePreview")
   .add(
     HttpApiEndpoint.post("devicePreview.runApp", "/api/device-preview/run", {
       query: LocationQuery,
-      payload: DevicePreview.PlatformInput,
+      payload: DevicePreview.RunInput,
       success: Location.response(DevicePreview.Info),
     })
       .annotateMerge(locationQueryOpenApi)
@@ -62,7 +62,22 @@ export const DevicePreviewGroup = HttpApiGroup.make("server.devicePreview")
           identifier: "v2.devicePreview.runApp",
           summary: "Build and run the app",
           description:
-            "Build the native project for one platform, install it on the running simulator or emulator, and launch it. Returns immediately; poll the get endpoint for progress.",
+            "Build the native project for one platform, install it on the running simulator or emulator, and launch it. Expo apps are prebuilt first, and React Native apps get a Metro bundler started for them. Apps from other locations are stopped first: one project runs at a time. Returns immediately; poll the get endpoint for progress.",
+        }),
+      ),
+  )
+  .add(
+    HttpApiEndpoint.post("devicePreview.focus", "/api/device-preview/focus", {
+      query: LocationQuery,
+      success: Location.response(DevicePreview.Info),
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "v2.devicePreview.focus",
+          summary: "Make this location the running project",
+          description:
+            "Called when the user switches to this location. If another location's app is running, stop it and start this one, relaunching the installed app when possible. Does nothing when no project is running.",
         }),
       ),
   )

@@ -120,6 +120,8 @@ import type {
   DevicePreviewStopOutput,
   DevicePreviewRunAppInput,
   DevicePreviewRunAppOutput,
+  DevicePreviewFocusInput,
+  DevicePreviewFocusOutput,
   DevicePreviewStopAppInput,
   DevicePreviewStopAppOutput,
 } from "./types"
@@ -1042,7 +1044,19 @@ export function make(options: ClientOptions) {
             method: "POST",
             path: `/api/device-preview/run`,
             query: { location: input["location"] },
-            body: { platform: input["platform"] },
+            body: { platform: input["platform"], relaunch: input["relaunch"] },
+            successStatus: 200,
+            declaredStatuses: [401, 400],
+            empty: false,
+          },
+          requestOptions,
+        ),
+      focus: (input?: DevicePreviewFocusInput, requestOptions?: RequestOptions) =>
+        request<DevicePreviewFocusOutput>(
+          {
+            method: "POST",
+            path: `/api/device-preview/focus`,
+            query: { location: input?.["location"] },
             successStatus: 200,
             declaredStatuses: [401, 400],
             empty: false,

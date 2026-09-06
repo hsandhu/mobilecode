@@ -37,7 +37,14 @@ import { SessionContextUsage } from "@/components/session-context-usage"
 const reviewTabID = "session-side-panel-review-tab"
 const reviewTabPanelID = "session-side-panel-review-tabpanel"
 const fileBrowserTabPanelID = "session-side-panel-file-browser-tabpanel"
-import { SessionContextTab, SessionDeviceTab, SortableTab, SortableTabV2, FileVisual } from "@/components/session"
+import {
+  SessionContextTab,
+  SessionDeviceRun,
+  SessionDeviceTab,
+  SortableTab,
+  SortableTabV2,
+  FileVisual,
+} from "@/components/session"
 import { createDeviceState, devicePreviewIcon } from "@/components/session/device-state"
 import { OpenInAppV2 } from "@/components/session/open-in-app-v2"
 import { useCommand } from "@/context/command"
@@ -496,12 +503,13 @@ export function SessionSidePanel(props: {
                                 </For>
                               </SortableProvider>
                               <div
-                                class="h-full shrink-0 sticky right-0 z-10 flex items-center justify-center pr-3"
+                                class="h-full shrink-0 sticky right-0 z-10 flex items-center justify-center gap-2 pr-3"
                                 classList={{
                                   "bg-v2-background-bg-base": settings.general.newLayoutDesigns(),
                                   "bg-background-stronger": !settings.general.newLayoutDesigns(),
                                 }}
                               >
+                                <SessionDeviceRun />
                                 <Show when={!deviceOpen() && devicePlatforms()[0]}>
                                   {(platform) => (
                                     <Tooltip
@@ -799,7 +807,10 @@ export function SessionSidePanel(props: {
                                   >
                                     <IconButtonV2
                                       icon={
-                                        <AppIcon id={devicePreviewIcon(platform())} style={{ width: "16px", height: "16px" }} />
+                                        <AppIcon
+                                          id={devicePreviewIcon(platform())}
+                                          style={{ width: "16px", height: "16px" }}
+                                        />
                                       }
                                       variant="ghost-muted"
                                       size="large"
@@ -832,10 +843,11 @@ export function SessionSidePanel(props: {
                             </div>
                           </Tabs.List>
                           <div
-                            class="session-review-v2-open-in-app-slot shrink-0 flex items-center pr-3"
+                            class="session-review-v2-open-in-app-slot shrink-0 flex items-center gap-2 pr-3"
                             onPointerDown={(event) => event.stopPropagation()}
                             onClick={(event) => event.stopPropagation()}
                           >
+                            <SessionDeviceRun />
                             <OpenInAppV2 directory={projectDirectory} />
                           </div>
                         </div>

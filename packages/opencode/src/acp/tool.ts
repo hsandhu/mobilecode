@@ -41,6 +41,7 @@ export function toToolKind(toolName: string): ToolKind {
   switch (tool) {
     case "bash":
     case "shell":
+    case "device_run":
       return "execute"
 
     case "webfetch":

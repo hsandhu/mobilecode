@@ -22,6 +22,7 @@ import {
 import { makeEventListener } from "@solid-primitives/event-listener"
 import { createMediaQuery } from "@solid-primitives/media"
 import { createResizeObserver } from "@solid-primitives/resize-observer"
+import { createDeviceState } from "@/components/session/device-state"
 import { debounce } from "@solid-primitives/scheduled"
 import { useLocal } from "@/context/local"
 import { FileProvider, selectionFromLines, useFile, type FileSelection, type SelectedLineRange } from "@/context/file"
@@ -477,6 +478,12 @@ export default function Page() {
   const splitReview = createMemo(
     () => (newSessionDesign() ? desktopV2ReviewOpen() : desktopReviewOpen()) && layout.review.diffStyle() === "split",
   )
+  // Two device streams side by side need the same room as a split diff.
+  const deviceState = createDeviceState()
+  const splitDevice = createMemo(
+    () => desktopReviewOpen() && tabs().tabs().active === "device" && deviceState.platforms().length > 1,
+  )
+  const wideReview = createMemo(() => splitReview() || splitDevice())
   // The observer reports the content-box width, which already excludes the row
   // padding; only the flex gap between the panels remains to subtract.
   const sessionPanelAvailable = createMemo(() => {
@@ -487,7 +494,7 @@ export default function Page() {
   const sessionPanelMax = createMemo(() => {
     const available = sessionPanelAvailable()
     if (available === undefined) return 1000
-    return sessionPanelWidthMax({ available, split: splitReview() })
+    return sessionPanelWidthMax({ available, split: wideReview() })
   })
   // Clamp at render time so window or sidebar resizes squeeze the chat panel
   // instead of the review pane, without overwriting the persisted width.
@@ -495,7 +502,7 @@ export default function Page() {
     clampSessionPanelWidth({
       width: layout.session.width(),
       available: sessionPanelAvailable(),
-      split: splitReview(),
+      split: wideReview(),
     }),
   )
   const sessionPanelWidth = createMemo(() => {

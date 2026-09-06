@@ -3,12 +3,23 @@
 
 MobileCode is a fork of [opencode](https://github.com/anomalyco/opencode) that knows about mobile projects. When it detects an iOS or Android project it can run the simulator or emulator preview server and render the live device inside the app, next to your session.
 
+### React Native
+
+Run a React Native app on iOS and Android from one Play button. MobileCode starts one Metro server, builds both native projects, and launches them in embedded Simulator and Emulator panes.
+
+<p align="center">
+  <img src=".github/assets/react-native-demo.gif" alt="MobileCode building and running a React Native app on iOS and Android" width="100%">
+</p>
+
 <p align="center">
   <img src=".github/assets/mobilecode-demo.gif" alt="MobileCode building and running an iOS app in the embedded simulator" width="100%">
 </p>
 
 - **iOS**: detects Xcode projects and workspaces, CocoaPods, and Expo apps, then runs [serve-sim](https://github.com/EvanBacon/serve-sim) and embeds the iOS Simulator stream.
 - **Android**: detects Gradle projects and Expo apps, then runs [serve-avd](https://github.com/hsandhu/serve-avd) and embeds the Android Emulator stream.
+- **Expo and React Native**: Play generates the native project with `expo prebuild` when needed, installs pods, starts Metro, and connects the emulator to it through `adb reverse`. One Metro serves both platforms.
+- **Agent-driven runs**: the `device_run` tool lets the agent build and launch the app itself, wait for the result, and read the build error and log tail, so it can fix a failing build without you pasting logs. The device pane opens when a run starts.
+- **One project at a time**: the simulator, emulator and Metro port are shared, so starting a project stops any other project's apps first. Switching to a tab whose project was running brings it back, relaunching the installed app without a rebuild when it can.
 - Everything else opencode does: terminal UI, desktop app, web UI, any model provider, MCP, plugins, and skills.
 
 ### How the device pane works
