@@ -50,7 +50,8 @@ runs:
           ${{ runner.os }}-bun-
 
     - name: Install setuptools for distutils compatibility
-      run: python3 -m pip install setuptools || pip install setuptools || true
+      # Ubuntu 24.04 marks its Python as externally managed (PEP 668); allow the install rather than log an error.
+      run: python3 -m pip install --break-system-packages setuptools || pip install setuptools || true
       shell: bash
 
     - name: Install dependencies
