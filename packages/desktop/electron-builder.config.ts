@@ -30,6 +30,25 @@ async function signWindows(configuration: { path: string }) {
 const signing = process.env.CSC_IDENTITY_AUTO_DISCOVERY !== "false"
 const notarize = signing && Boolean(process.env.APPLE_API_KEY)
 
+// When no Developer ID identity signed the app, electron-builder leaves the bundle unsealed and a
+// downloaded copy fails Gatekeeper as "damaged" with no way to open it. An ad-hoc seal turns that
+// into the "unidentified developer" prompt that Privacy & Security can override. A properly signed
+// build passes verification and is left alone.
+async function sealUnsigned(context: {
+  appOutDir: string
+  electronPlatformName: string
+  packager: { appInfo: { productFilename: string } }
+}) {
+  if (context.electronPlatformName !== "darwin") return
+  const app = path.join(context.appOutDir, `${context.packager.appInfo.productFilename}.app`)
+  try {
+    await execFileAsync("codesign", ["--verify", "--deep", "--strict", app])
+    return
+  } catch {}
+  console.log(`  • ad-hoc signing ${path.basename(app)} (no Developer ID identity available)`)
+  await execFileAsync("codesign", ["--force", "--deep", "--sign", "-", app])
+}
+
 const channel = (() => {
   const raw = process.env.OPENCODE_CHANNEL
   if (raw === "dev" || raw === "beta" || raw === "prod") return raw
@@ -70,6 +89,7 @@ const getBase = (appId: string): Configuration => ({
       filter: ["index.js", "index.d.ts", "build/Release/mac_window.node", "swift-build/**"],
     },
   ],
+  afterSign: sealUnsigned,
   mac: {
     category: "public.app-category.developer-tools",
     icon: `resources/icons/icon.icns`,

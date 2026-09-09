@@ -10,8 +10,10 @@ name: Release macOS
 # (or pass publish=true). The zip and latest-mac.yml are what the in-app updater reads, so keep
 # the asset names electron-builder chooses.
 #
-# Builds are intentionally unsigned for now. Users must right-click the app and choose Open
-# the first time they launch it.
+# Builds are intentionally unsigned for now. electron-builder.config.ts ad-hoc seals the bundle so
+# a downloaded copy is not reported as "damaged"; the first launch is refused, and the user allows
+# it under System Settings > Privacy & Security > Open Anyway. The in-app updater stays disabled
+# until builds are signed with a Developer ID and notarized.
 
 on:
   push:
