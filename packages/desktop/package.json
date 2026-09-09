@@ -1,8 +1,7 @@
 {
   "name": "@opencode-ai/desktop",
   "private": true,
-  "version": "1.18.29",
-  "description": "MobileCode desktop app with embedded iOS and Android previews",
+  "version": "1.18.30",
   "type": "module",
   "license": "MIT",
   "homepage": "https://github.com/hsandhu/mobilecode",
@@ -72,5 +71,6 @@
     "@parcel/watcher-linux-x64-musl": "2.5.1",
     "@parcel/watcher-win32-arm64": "2.5.1",
     "@parcel/watcher-win32-x64": "2.5.1"
-  }
+  },
+  "description": "MobileCode desktop app with embedded iOS and Android previews"
 }
