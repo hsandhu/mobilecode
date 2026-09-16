@@ -150,10 +150,7 @@ function DevicePane(props: {
   const label = (value: DevicePreview.Platform) =>
     value === "ios" ? language.t("session.device.platform.ios") : language.t("session.device.platform.android")
   const log = createMemo(() => {
-    const current = build()
-    const fromBuild = current && (deviceBuildBusy(current) || current.status === "failed")
-    const lines = fromBuild ? current.log : (server()?.log ?? [])
-    return lines.slice(-LOG_TAIL).join("\n")
+    return build()?.log.slice(-LOG_TAIL).join("\n") ?? ""
   })
 
   // The build's own state takes the header slot while it matters; otherwise the stream address.
@@ -221,7 +218,7 @@ function DevicePane(props: {
             {progress().text}
           </span>
         </div>
-        <Show when={build()?.status === "failed" || deviceBuildBusy(build())}>
+        <Show when={build()}>
           <Button size="small" variant="ghost" onClick={() => setShowLog(!showLog())}>
             {showLog() ? language.t("session.device.hideLog") : language.t("session.device.showLog")}
           </Button>
@@ -299,7 +296,7 @@ function DevicePane(props: {
             </div>
           </Match>
         </Switch>
-        <Show when={showLog() && log()}>
+        <Show when={showLog() && build()}>
           <pre class="absolute inset-x-0 bottom-0 max-h-56 overflow-auto px-3 py-2 whitespace-pre-wrap text-11-regular text-text-weak bg-background-stronger border-t border-border-weaker-base select-text">
             {log()}
           </pre>

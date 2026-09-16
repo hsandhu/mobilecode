@@ -706,29 +706,39 @@ const Endpoint18_2 = (raw: RawClient["server.devicePreview"]) => (input: Endpoin
     Effect.mapError(mapClientError),
   )
 
-type Endpoint18_3Request = Parameters<RawClient["server.devicePreview"]["devicePreview.runApp"]>[0]
-type Endpoint18_3Input = {
-  readonly location?: Endpoint18_3Request["query"]["location"]
-  readonly platform: Endpoint18_3Request["payload"]["platform"]
-  readonly relaunch?: Endpoint18_3Request["payload"]["relaunch"]
+type Endpoint18_3Request = Parameters<RawClient["server.devicePreview"]["devicePreview.startBundler"]>[0]
+type Endpoint18_3Input = { readonly location?: Endpoint18_3Request["query"]["location"] }
+const Endpoint18_3 = (raw: RawClient["server.devicePreview"]) => (input?: Endpoint18_3Input) =>
+  raw["devicePreview.startBundler"]({ query: { location: input?.["location"] } }).pipe(Effect.mapError(mapClientError))
+
+type Endpoint18_4Request = Parameters<RawClient["server.devicePreview"]["devicePreview.stopBundler"]>[0]
+type Endpoint18_4Input = { readonly location?: Endpoint18_4Request["query"]["location"] }
+const Endpoint18_4 = (raw: RawClient["server.devicePreview"]) => (input?: Endpoint18_4Input) =>
+  raw["devicePreview.stopBundler"]({ query: { location: input?.["location"] } }).pipe(Effect.mapError(mapClientError))
+
+type Endpoint18_5Request = Parameters<RawClient["server.devicePreview"]["devicePreview.runApp"]>[0]
+type Endpoint18_5Input = {
+  readonly location?: Endpoint18_5Request["query"]["location"]
+  readonly platform: Endpoint18_5Request["payload"]["platform"]
+  readonly relaunch?: Endpoint18_5Request["payload"]["relaunch"]
 }
-const Endpoint18_3 = (raw: RawClient["server.devicePreview"]) => (input: Endpoint18_3Input) =>
+const Endpoint18_5 = (raw: RawClient["server.devicePreview"]) => (input: Endpoint18_5Input) =>
   raw["devicePreview.runApp"]({
     query: { location: input["location"] },
     payload: { platform: input["platform"], relaunch: input["relaunch"] },
   }).pipe(Effect.mapError(mapClientError))
 
-type Endpoint18_4Request = Parameters<RawClient["server.devicePreview"]["devicePreview.focus"]>[0]
-type Endpoint18_4Input = { readonly location?: Endpoint18_4Request["query"]["location"] }
-const Endpoint18_4 = (raw: RawClient["server.devicePreview"]) => (input?: Endpoint18_4Input) =>
+type Endpoint18_6Request = Parameters<RawClient["server.devicePreview"]["devicePreview.focus"]>[0]
+type Endpoint18_6Input = { readonly location?: Endpoint18_6Request["query"]["location"] }
+const Endpoint18_6 = (raw: RawClient["server.devicePreview"]) => (input?: Endpoint18_6Input) =>
   raw["devicePreview.focus"]({ query: { location: input?.["location"] } }).pipe(Effect.mapError(mapClientError))
 
-type Endpoint18_5Request = Parameters<RawClient["server.devicePreview"]["devicePreview.stopApp"]>[0]
-type Endpoint18_5Input = {
-  readonly location?: Endpoint18_5Request["query"]["location"]
-  readonly platform: Endpoint18_5Request["payload"]["platform"]
+type Endpoint18_7Request = Parameters<RawClient["server.devicePreview"]["devicePreview.stopApp"]>[0]
+type Endpoint18_7Input = {
+  readonly location?: Endpoint18_7Request["query"]["location"]
+  readonly platform: Endpoint18_7Request["payload"]["platform"]
 }
-const Endpoint18_5 = (raw: RawClient["server.devicePreview"]) => (input: Endpoint18_5Input) =>
+const Endpoint18_7 = (raw: RawClient["server.devicePreview"]) => (input: Endpoint18_7Input) =>
   raw["devicePreview.stopApp"]({
     query: { location: input["location"] },
     payload: { platform: input["platform"] },
@@ -738,9 +748,11 @@ const adaptGroup18 = (raw: RawClient["server.devicePreview"]) => ({
   get: Endpoint18_0(raw),
   start: Endpoint18_1(raw),
   stop: Endpoint18_2(raw),
-  runApp: Endpoint18_3(raw),
-  focus: Endpoint18_4(raw),
-  stopApp: Endpoint18_5(raw),
+  startBundler: Endpoint18_3(raw),
+  stopBundler: Endpoint18_4(raw),
+  runApp: Endpoint18_5(raw),
+  focus: Endpoint18_6(raw),
+  stopApp: Endpoint18_7(raw),
 })
 
 const adaptClient = (raw: RawClient) => ({

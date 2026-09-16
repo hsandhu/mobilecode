@@ -51,6 +51,8 @@ const preview = Layer.succeed(
     info: () => Effect.sync(advance),
     start: () => Effect.die("unused"),
     stop: () => Effect.die("unused"),
+    startBundler: () => Effect.die("unused"),
+    stopBundler: () => Effect.die("unused"),
     runApp: (input) => Effect.sync(() => (calls.push(`run ${input.platform}`), advance())),
     stopApp: (input) => Effect.sync(() => (calls.push(`stop ${input.platform}`), advance())),
     focus: () => Effect.die("unused"),

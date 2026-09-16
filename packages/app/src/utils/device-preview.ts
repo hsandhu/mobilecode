@@ -8,7 +8,7 @@ const decode = Schema.decodeUnknownSync(Schema.Struct({ data: DevicePreview.Info
 
 export type DevicePreviewApi = ReturnType<typeof createDevicePreviewApi>
 
-// The vendored v2 client predates this endpoint, so the app talks to it directly.
+// Keep device polling scoped to the selected server and directory without creating another SDK.
 export function createDevicePreviewApi(input: { server: ServerConnection.HttpBase; fetch?: typeof globalThis.fetch }) {
   const request = async (path: string, directory: string, init?: RequestInit) => {
     const url = new URL(`${input.server.url}${path}`)
@@ -37,6 +37,10 @@ export function createDevicePreviewApi(input: { server: ServerConnection.HttpBas
       request("/api/device-preview/start", directory, { method: "POST", body: JSON.stringify({ platform }) }),
     stop: (directory: string, platform: DevicePreview.Platform) =>
       request("/api/device-preview/stop", directory, { method: "POST", body: JSON.stringify({ platform }) }),
+    startBundler: (directory: string) =>
+      request("/api/device-preview/bundler/start", directory, { method: "POST" }),
+    stopBundler: (directory: string) =>
+      request("/api/device-preview/bundler/stop", directory, { method: "POST" }),
     runApp: (directory: string, platform: DevicePreview.Platform) =>
       request("/api/device-preview/run", directory, { method: "POST", body: JSON.stringify({ platform }) }),
     focus: (directory: string) => request("/api/device-preview/focus", directory, { method: "POST" }),

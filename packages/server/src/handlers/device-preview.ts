@@ -30,6 +30,23 @@ export const DevicePreviewHandler = HttpApiBuilder.group(Api, "server.devicePrev
           }),
         ),
       )
+      .handle("devicePreview.startBundler", () =>
+        response(
+          Effect.gen(function* () {
+            const location = yield* Location.Service
+            const env = yield* environment.get({ directory: location.directory, cwd: location.directory })
+            return yield* preview.startBundler({ directory: location.directory, env })
+          }),
+        ),
+      )
+      .handle("devicePreview.stopBundler", () =>
+        response(
+          Effect.gen(function* () {
+            const location = yield* Location.Service
+            return yield* preview.stopBundler({ directory: location.directory })
+          }),
+        ),
+      )
       .handle("devicePreview.runApp", (ctx) =>
         response(
           Effect.gen(function* () {

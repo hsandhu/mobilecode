@@ -51,6 +51,34 @@ export const DevicePreviewGroup = HttpApiGroup.make("server.devicePreview")
       ),
   )
   .add(
+    HttpApiEndpoint.post("devicePreview.startBundler", "/api/device-preview/bundler/start", {
+      query: LocationQuery,
+      success: Location.response(DevicePreview.Info),
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "v2.devicePreview.startBundler",
+          summary: "Start Metro",
+          description: "Start the Metro bundler for the React Native or Expo project at the requested location.",
+        }),
+      ),
+  )
+  .add(
+    HttpApiEndpoint.post("devicePreview.stopBundler", "/api/device-preview/bundler/stop", {
+      query: LocationQuery,
+      success: Location.response(DevicePreview.Info),
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "v2.devicePreview.stopBundler",
+          summary: "Stop Metro",
+          description: "Stop the Metro bundler for the React Native or Expo project at the requested location.",
+        }),
+      ),
+  )
+  .add(
     HttpApiEndpoint.post("devicePreview.runApp", "/api/device-preview/run", {
       query: LocationQuery,
       payload: DevicePreview.RunInput,

@@ -118,6 +118,10 @@ import type {
   DevicePreviewStartOutput,
   DevicePreviewStopInput,
   DevicePreviewStopOutput,
+  DevicePreviewStartBundlerInput,
+  DevicePreviewStartBundlerOutput,
+  DevicePreviewStopBundlerInput,
+  DevicePreviewStopBundlerOutput,
   DevicePreviewRunAppInput,
   DevicePreviewRunAppOutput,
   DevicePreviewFocusInput,
@@ -1032,6 +1036,30 @@ export function make(options: ClientOptions) {
             path: `/api/device-preview/stop`,
             query: { location: input["location"] },
             body: { platform: input["platform"] },
+            successStatus: 200,
+            declaredStatuses: [401, 400],
+            empty: false,
+          },
+          requestOptions,
+        ),
+      startBundler: (input?: DevicePreviewStartBundlerInput, requestOptions?: RequestOptions) =>
+        request<DevicePreviewStartBundlerOutput>(
+          {
+            method: "POST",
+            path: `/api/device-preview/bundler/start`,
+            query: { location: input?.["location"] },
+            successStatus: 200,
+            declaredStatuses: [401, 400],
+            empty: false,
+          },
+          requestOptions,
+        ),
+      stopBundler: (input?: DevicePreviewStopBundlerInput, requestOptions?: RequestOptions) =>
+        request<DevicePreviewStopBundlerOutput>(
+          {
+            method: "POST",
+            path: `/api/device-preview/bundler/stop`,
+            query: { location: input?.["location"] },
             successStatus: 200,
             declaredStatuses: [401, 400],
             empty: false,

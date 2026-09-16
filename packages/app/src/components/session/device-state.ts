@@ -53,7 +53,12 @@ function createShared(server: ServerConnection.HttpBase, directory: string, fetc
     const active = () => {
       const info = store.info
       if (!info) return false
-      return info.servers.some((item) => item.status !== "exited") || info.builds.some(deviceBuildBusy)
+      return (
+        info.bundler?.status === "starting" ||
+        info.bundler?.status === "running" ||
+        info.servers.some((item) => item.status !== "exited") ||
+        info.builds.some(deviceBuildBusy)
+      )
     }
     const refresh = async () => {
       const id = ++ticket
@@ -93,6 +98,8 @@ function createShared(server: ServerConnection.HttpBase, directory: string, fetc
         refresh,
         start: (platform: DevicePreview.Platform) => act(api.start(directory, platform)),
         stop: (platform: DevicePreview.Platform) => act(api.stop(directory, platform)),
+        startBundler: () => act(api.startBundler(directory)),
+        stopBundler: () => act(api.stopBundler(directory)),
         runApp: (platform: DevicePreview.Platform) => act(api.runApp(directory, platform)),
         stopApp: (platform: DevicePreview.Platform) => act(api.stopApp(directory, platform)),
         focus: () => act(api.focus(directory)),
@@ -137,6 +144,8 @@ export function createDeviceState() {
     refresh: () => shared().refresh(),
     start: (value: DevicePreview.Platform) => shared().start(value),
     stop: (value: DevicePreview.Platform) => shared().stop(value),
+    startBundler: () => shared().startBundler(),
+    stopBundler: () => shared().stopBundler(),
     runApp: (value: DevicePreview.Platform) => shared().runApp(value),
     stopApp: (value: DevicePreview.Platform) => shared().stopApp(value),
     focus: () => shared().focus(),

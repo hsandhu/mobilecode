@@ -35,6 +35,8 @@ export interface Interface {
     env?: Record<string, string>
   }) => Effect.Effect<Info>
   readonly stop: (input: Target) => Effect.Effect<Info>
+  readonly startBundler: (input: { directory: string; env?: Record<string, string> }) => Effect.Effect<Info>
+  readonly stopBundler: (input: { directory: string }) => Effect.Effect<Info>
   /** Build, install and launch the app on the running simulator or emulator. */
   readonly runApp: (input: {
     directory: string
@@ -131,6 +133,8 @@ type BundlerState = {
 type ActiveBundler = {
   state: BundlerState
   process?: ChildProcess
+  /** A user-started Metro stays up when the last native app is stopped. */
+  manual: boolean
   /** Settles once Metro answers or the process gives up; never rejects. */
   ready: Promise<void>
 }
@@ -312,11 +316,15 @@ const layer = Layer.effect(
         command: [spec.command, ...spec.args].join(" "),
         log: [],
       }
-      const active = { state } as ActiveBundler
+      const active: ActiveBundler = { state, manual: false, ready: Promise.resolve() }
+      const abandoned = () => bundlers.get(root) !== active || active.state.status === "exited"
       active.ready = (async () => {
         // Something (a terminal, an earlier session) may already be serving this port. Reuse it
         // rather than have Expo offer to pick another port that the app would not know about.
-        if (await DeviceBuild.metroRunning(port)) {
+        const running = await DeviceBuild.metroRunning(port)
+        // A stop can land during the port check. Do not spawn an untracked Metro afterwards.
+        if (abandoned()) return
+        if (running) {
           const owner = await DeviceBuild.portOwner(port)
           // Unknown owner (no lsof) is assumed to be ours, as before. A Metro serving another
           // project would hand this app the wrong bundle, so replace it.
@@ -329,6 +337,7 @@ const layer = Layer.effect(
           if (ours) {
             state.command = `Metro already running on port ${port}`
             state.url = DeviceBuild.metroUrl(port)
+            state.pid = owner?.pid
             state.status = "running"
             return
           }
@@ -340,6 +349,7 @@ const layer = Layer.effect(
           while (Date.now() < gone && (await DeviceBuild.metroRunning(port)))
             await new Promise((resolve) => setTimeout(resolve, 200))
         }
+        if (abandoned()) return
         const wrapped = DeviceBuild.guarded(spec.command, spec.args)
         const child = launch(wrapped.command, wrapped.args, {
           cwd: root,
@@ -389,10 +399,56 @@ const layer = Layer.effect(
       )
       if (others) return
       const active = bundlers.get(root)
-      if (!active) return
+      if (!active || active.manual) return
       bundlers.delete(root)
       await kill(active)
     }
+
+    const startBundler = Effect.fn("DevicePreview.startBundler")(function* (input: {
+      directory: string
+      env?: Record<string, string>
+    }) {
+      const project = DeviceBuild.findProjects(input.directory).find((candidate) => candidate.framework !== "native")
+      if (!project) return yield* info(input)
+      const runtime = yield* Effect.promise(() => nodeEnvironment(project, input.env))
+      if ("problem" in runtime) {
+        const spec = DeviceBuild.bundlerCommand(project.framework, DeviceBuild.metroPort())
+        bundlers.set(project.root, {
+          state: {
+            framework: project.framework,
+            directory: project.root,
+            status: "exited",
+            command: [spec.command, ...spec.args].join(" "),
+            log: [runtime.problem],
+          },
+          manual: true,
+          ready: Promise.resolve(),
+        })
+        return yield* info(input)
+      }
+      const active = ensureBundler(project.root, project.framework, runtime.env)
+      active.manual = true
+      if (runtime.note) push(active.state.log, runtime.note)
+      return yield* info(input)
+    })
+
+    const stopBundler = Effect.fn("DevicePreview.stopBundler")(function* (input: { directory: string }) {
+      const matches = [...bundlers.values()].filter((active) => within(active.state.directory, input.directory))
+      yield* Effect.promise(async () => {
+        for (const active of matches) {
+          if (active.process) {
+            await kill(active)
+          } else if (active.state.pid && active.state.status !== "exited") {
+            try {
+              process.kill(active.state.pid, "SIGTERM")
+            } catch {}
+          }
+          active.state.status = "exited"
+          active.state.url = undefined
+        }
+      })
+      return yield* info(input)
+    })
 
     const stop = Effect.fn("DevicePreview.stop")(function* (input: Target) {
       const active = servers.get(input.platform)
@@ -489,7 +545,7 @@ const layer = Layer.effect(
       return yield* info(input)
     })
 
-    return Service.of({ detect, info, start, stop, runApp, stopApp, focus })
+    return Service.of({ detect, info, start, stop, startBundler, stopBundler, runApp, stopApp, focus })
   }),
 )
 
@@ -545,18 +601,11 @@ async function execute(
 
     // Expo and React Native pin a Node range; the login shell's default is often older. Find one
     // that fits and put it first on PATH for every step below, or stop before wasting a build.
-    if (project.framework !== "native") {
-      const ranges = DeviceBuild.nodeRequirement(project.root)
-      if (ranges.length > 0) {
-        const node = await DeviceBuild.resolveNode(ranges, { ...process.env, ...env })
-        if (active.cancelled) return
-        if ("problem" in node) return fail(node.problem)
-        if (node.bin) {
-          env = { ...env, PATH: `${node.bin}${path.delimiter}${env?.["PATH"] ?? process.env["PATH"] ?? ""}` }
-          if (node.note) log(node.note)
-        }
-      }
-    }
+    const node = await nodeEnvironment(project, env)
+    if (active.cancelled) return
+    if ("problem" in node) return fail(node.problem)
+    env = node.env
+    if (node.note) log(node.note)
 
     if (project.needsPrebuild) {
       const generated = await prebuild(active, project, env, report)
@@ -615,6 +664,19 @@ async function execute(
     )
   } catch (error) {
     fail(error instanceof Error ? error.message : String(error))
+  }
+}
+
+async function nodeEnvironment(project: DeviceBuild.Project, env: Record<string, string> | undefined) {
+  if (project.framework === "native") return { env }
+  const ranges = DeviceBuild.nodeRequirement(project.root)
+  if (ranges.length === 0) return { env }
+  const node = await DeviceBuild.resolveNode(ranges, { ...process.env, ...env })
+  if ("problem" in node) return node
+  if (!node.bin) return { env, note: node.note }
+  return {
+    env: { ...env, PATH: `${node.bin}${path.delimiter}${env?.["PATH"] ?? process.env["PATH"] ?? ""}` },
+    note: node.note,
   }
 }
 
