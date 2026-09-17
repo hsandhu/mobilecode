@@ -4,7 +4,7 @@ import { Tooltip } from "@opencode-ai/ui/tooltip"
 import { For, Show, createEffect } from "solid-js"
 import { useLanguage } from "@/context/language"
 import { showToast } from "@/utils/toast"
-import { createDeviceState, deviceBuildBusy, deviceFrameworkIcon, devicePreviewIcon } from "./device-state"
+import { createDeviceState, deviceFrameworkIcon, devicePreviewIcon } from "./device-state"
 
 function PlayGlyph() {
   return (
@@ -26,6 +26,7 @@ function RunControl(props: {
   icon: "react" | "xcode" | "android-studio"
   title: string
   stoppable: boolean
+  pending: boolean
   onRun: () => void
   onStop: () => void
 }) {
@@ -34,6 +35,8 @@ function RunControl(props: {
       <button
         type="button"
         aria-label={props.title}
+        disabled={props.pending}
+        aria-busy={props.pending}
         class="flex h-6 box-border shrink-0 items-center gap-1 rounded-md border border-border-weak-base bg-surface-panel pl-1.5 pr-1 text-text-strong hover:bg-surface-raised-base-hover"
         onClick={() => (props.stoppable ? props.onStop() : props.onRun())}
       >
@@ -56,11 +59,6 @@ export function SessionDeviceRun() {
 
   const label = (platform: DevicePreview.Platform) =>
     platform === "ios" ? language.t("session.device.platform.ios") : language.t("session.device.platform.android")
-  const busy = (platform: DevicePreview.Platform) => deviceBuildBusy(device.build(platform))
-  const stoppable = (platform: DevicePreview.Platform) => {
-    const build = device.build(platform)
-    return build?.status === "running" || deviceBuildBusy(build)
-  }
   const bundlerStoppable = () => {
     const status = device.info()?.bundler?.status
     return status === "starting" || status === "running"
@@ -95,6 +93,7 @@ export function SessionDeviceRun() {
               icon={icon()}
               title={language.t(bundlerStoppable() ? "session.device.stop" : "session.device.start")}
               stoppable={bundlerStoppable()}
+              pending={device.pending("metro")}
               onRun={() => void device.startBundler()}
               onStop={() => void device.stopBundler()}
             />
@@ -104,13 +103,12 @@ export function SessionDeviceRun() {
           {(platform) => (
             <RunControl
               icon={devicePreviewIcon(platform)}
-              title={language.t(stoppable(platform) ? "session.device.run.stop" : "session.device.run.play", {
+              title={language.t(device.stoppable(platform) ? "session.device.run.stop" : "session.device.run.play", {
                 platform: label(platform),
               })}
-              stoppable={stoppable(platform)}
-              onRun={() => {
-                if (!busy(platform)) void device.runApp(platform)
-              }}
+              stoppable={device.stoppable(platform)}
+              pending={device.pending(platform)}
+              onRun={() => void device.runApp(platform)}
               onStop={() => void device.stopApp(platform)}
             />
           )}

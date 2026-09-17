@@ -4,7 +4,7 @@ import { AppIcon } from "@opencode-ai/ui/app-icon"
 import { Button } from "@opencode-ai/ui/button"
 import { IconButton } from "@opencode-ai/ui/icon-button"
 import { Spinner } from "@opencode-ai/ui/spinner"
-import { For, Match, Show, Switch, createEffect, createMemo, createSignal, onCleanup } from "solid-js"
+import { For, Match, Show, Switch, createMemo, createSignal, onCleanup } from "solid-js"
 import { createStore } from "solid-js/store"
 import { useLanguage } from "@/context/language"
 import { usePlatform } from "@/context/platform"
@@ -36,7 +36,6 @@ export function SessionDeviceTab() {
 
   const [store, setStore] = createStore({
     selected: undefined as DevicePreview.Platform | undefined,
-    started: {} as Partial<Record<DevicePreview.Platform, boolean>>,
     showBundlerLog: false,
   })
 
@@ -51,16 +50,6 @@ export function SessionDeviceTab() {
     if (value.status === "running") return language.t("session.device.bundler.running", { url: value.url ?? "" })
     if (value.status === "exited") return language.t("session.device.bundler.exited")
     return language.t("session.device.bundler.starting")
-  })
-
-  // Opening the pane starts a preview for every detected platform, once. Stop stays respected.
-  createEffect(() => {
-    if (!device.info()) return
-    for (const value of detected()) {
-      if (store.started[value]) continue
-      setStore("started", value, true)
-      if (!device.server(value)) void device.start(value)
-    }
   })
 
   return (
@@ -147,6 +136,7 @@ function DevicePane(props: {
   const build = createMemo(() => props.device.build(props.platform))
   const url = createMemo(() => devicePreviewUrl(server()?.url, serverSDK().url))
   const running = createMemo(() => server()?.status === "running" && !!url())
+  const disabled = createMemo(() => props.device.pending(props.platform) || !props.detected.includes(props.platform))
   const label = (value: DevicePreview.Platform) =>
     value === "ios" ? language.t("session.device.platform.ios") : language.t("session.device.platform.android")
   const log = createMemo(() => {
@@ -176,7 +166,11 @@ function DevicePane(props: {
 
   return (
     <div class={`flex flex-col h-full min-h-0 min-w-0 ${props.class ?? ""}`} classList={props.classList}>
-      <div class="flex items-center gap-2 px-3 h-10 shrink-0 border-b border-border-weaker-base">
+      <div
+        role="toolbar"
+        aria-label={label(props.platform)}
+        class="flex items-center gap-2 px-3 h-10 shrink-0 border-b border-border-weaker-base"
+      >
         <Show
           when={props.options && props.options.length > 1 ? props.options : undefined}
           fallback={
@@ -239,14 +233,19 @@ function DevicePane(props: {
           />
         </Show>
         <Show
-          when={server() && server()!.status !== "exited"}
+          when={props.device.stoppable(props.platform)}
           fallback={
-            <Button size="small" onClick={() => void props.device.start(props.platform)}>
+            <Button size="small" disabled={disabled()} onClick={() => void props.device.runApp(props.platform)}>
               {language.t("session.device.start")}
             </Button>
           }
         >
-          <Button size="small" variant="ghost" onClick={() => void props.device.stop(props.platform)}>
+          <Button
+            size="small"
+            variant="ghost"
+            disabled={disabled()}
+            onClick={() => void props.device.stopApp(props.platform)}
+          >
             {language.t("session.device.stop")}
           </Button>
         </Show>
@@ -271,10 +270,16 @@ function DevicePane(props: {
               </div>
             </div>
           </Match>
+          <Match when={deviceBuildBusy(build()) || props.device.pending(props.platform)}>
+            <div class="h-full flex flex-col items-center justify-center gap-4 px-6 text-center">
+              <Spinner class="size-4" />
+              <div class="text-12-regular text-text-weak">{progress().text}</div>
+            </div>
+          </Match>
           <Match when={server()?.status === "exited"}>
             <div class="h-full flex flex-col items-center justify-center gap-4 px-6 text-center">
               <div class="text-12-regular text-text-weak">{language.t("session.device.status.exited")}</div>
-              <Button size="small" onClick={() => void props.device.start(props.platform)}>
+              <Button size="small" disabled={disabled()} onClick={() => void props.device.runApp(props.platform)}>
                 {language.t("session.device.restart")}
               </Button>
             </div>
@@ -286,11 +291,7 @@ function DevicePane(props: {
                   ? language.t("session.device.status.notDetected")
                   : language.t("session.device.status.stopped")}
               </div>
-              <Button
-                size="small"
-                disabled={!props.device.info()}
-                onClick={() => void props.device.start(props.platform)}
-              >
+              <Button size="small" disabled={disabled()} onClick={() => void props.device.runApp(props.platform)}>
                 {language.t("session.device.start")}
               </Button>
             </div>

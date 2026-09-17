@@ -57,6 +57,8 @@ export const Build = Schema.Struct({
   target: optional(Schema.String),
   // Bundle identifier or Android package name.
   appID: optional(Schema.String),
+  // Virtual device owned by this run, retained after build failure until explicitly stopped.
+  device: optional(Schema.String),
   // Short description of the current step, shown next to the run control.
   step: optional(Schema.String),
   error: optional(Schema.String),
@@ -73,7 +75,7 @@ export const Info = Schema.Struct({
   framework: optional(Framework),
   // Metro bundler for the detected React Native or Expo project, once started.
   bundler: optional(Bundler),
-  // Preview servers managed by this opencode process, regardless of location.
+  // Preview servers owned by the requested location.
   servers: Schema.Array(Server),
   // Build and run state for the requested location.
   builds: Schema.Array(Build),

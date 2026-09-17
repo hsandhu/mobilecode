@@ -38,7 +38,11 @@ const cache = new Map<string, { shared: Shared; dispose: () => void; refs: numbe
 function createShared(server: ServerConnection.HttpBase, directory: string, fetch?: typeof globalThis.fetch) {
   return createRoot((disposeRoot) => {
     const api = createDevicePreviewApi({ server, fetch })
-    const [store, setStore] = createStore<{ info?: DevicePreview.Info; error?: string }>({})
+    const [store, setStore] = createStore<{
+      info?: DevicePreview.Info
+      error?: string
+      pending: Record<DevicePreview.Platform | "metro", boolean>
+    }>({ pending: { ios: false, android: false, metro: false } })
     let timer: ReturnType<typeof setTimeout> | undefined
     let stopped = false
     // Every request takes a ticket; only the newest response may land, so a slow background poll
@@ -79,14 +83,17 @@ function createShared(server: ServerConnection.HttpBase, directory: string, fetc
       await refresh()
       schedule()
     }
-    const act = async (task: Promise<DevicePreview.Info>) => {
+    const act = async (target: DevicePreview.Platform | "metro", task: () => Promise<DevicePreview.Info>) => {
+      if (store.pending[target]) return
+      setStore("pending", target, true)
       if (timer) clearTimeout(timer)
       const id = ++ticket
       try {
-        apply(id, { info: await task })
+        apply(id, { info: await task() })
       } catch (error) {
         apply(id, { error: message(error) })
       }
+      setStore("pending", target, false)
       schedule()
     }
 
@@ -96,13 +103,10 @@ function createShared(server: ServerConnection.HttpBase, directory: string, fetc
       shared: {
         store,
         refresh,
-        start: (platform: DevicePreview.Platform) => act(api.start(directory, platform)),
-        stop: (platform: DevicePreview.Platform) => act(api.stop(directory, platform)),
-        startBundler: () => act(api.startBundler(directory)),
-        stopBundler: () => act(api.stopBundler(directory)),
-        runApp: (platform: DevicePreview.Platform) => act(api.runApp(directory, platform)),
-        stopApp: (platform: DevicePreview.Platform) => act(api.stopApp(directory, platform)),
-        focus: () => act(api.focus(directory)),
+        startBundler: () => act("metro", () => api.startBundler(directory)),
+        stopBundler: () => act("metro", () => api.stopBundler(directory)),
+        runApp: (platform: DevicePreview.Platform) => act(platform, () => api.runApp(directory, platform)),
+        stopApp: (platform: DevicePreview.Platform) => act(platform, () => api.stopApp(directory, platform)),
       },
       dispose: () => {
         stopped = true
@@ -141,14 +145,21 @@ export function createDeviceState() {
     platforms: createMemo(() => info()?.platforms ?? []),
     server: (value: DevicePreview.Platform) => info()?.servers.find((item) => item.platform === value),
     build: (value: DevicePreview.Platform) => info()?.builds.find((item) => item.platform === value),
+    pending: (value: DevicePreview.Platform | "metro") => shared().store.pending[value],
+    stoppable: (value: DevicePreview.Platform) => {
+      const build = info()?.builds.find((item) => item.platform === value)
+      return (
+        deviceBuildBusy(build) ||
+        build?.status === "running" ||
+        !!build?.device ||
+        !!info()?.servers.some((item) => item.platform === value && item.status !== "exited")
+      )
+    },
     refresh: () => shared().refresh(),
-    start: (value: DevicePreview.Platform) => shared().start(value),
-    stop: (value: DevicePreview.Platform) => shared().stop(value),
     startBundler: () => shared().startBundler(),
     stopBundler: () => shared().stopBundler(),
     runApp: (value: DevicePreview.Platform) => shared().runApp(value),
     stopApp: (value: DevicePreview.Platform) => shared().stopApp(value),
-    focus: () => shared().focus(),
   }
 }
 
@@ -163,7 +174,6 @@ function release(id: string) {
 
 const autoOpened = new Set<string>()
 const seenBuilds = new Set<string>()
-let focused: string | undefined
 
 /**
  * Open the device pane by itself the first time a session is shown for a mobile project, and
@@ -188,18 +198,6 @@ export function createDeviceAutoOpen() {
     if (autoOpened.has(key)) return
     autoOpened.add(key)
     open()
-  })
-
-  // Switching tabs between two mobile projects hands the devices to the one now in front. The
-  // server decides whether anything actually changes: it only acts when another project was
-  // running, or this one was parked by an earlier switch.
-  createEffect(() => {
-    if (!params.id || !isDesktop()) return
-    if (device.platforms().length === 0) return
-    const key = sessionKey()
-    if (focused === key) return
-    focused = key
-    void device.focus()
   })
 
   createEffect(() => {

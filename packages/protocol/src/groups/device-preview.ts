@@ -31,7 +31,7 @@ export const DevicePreviewGroup = HttpApiGroup.make("server.devicePreview")
           identifier: "v2.devicePreview.start",
           summary: "Start device preview",
           description:
-            "Start serve-sim (iOS) or serve-avd (Android) for the requested location. Poll the get endpoint until the server reports a URL.",
+            "Start the virtual device and its preview stream, then build, install and launch the requested location's app for one platform. Equivalent to runApp; poll the get endpoint for progress.",
         }),
       ),
   )
@@ -46,7 +46,8 @@ export const DevicePreviewGroup = HttpApiGroup.make("server.devicePreview")
         OpenApi.annotations({
           identifier: "v2.devicePreview.stop",
           summary: "Stop device preview",
-          description: "Stop the simulator or emulator preview server for one platform.",
+          description:
+            "Cancel the location's build, terminate its app, stop its preview stream and shut down its virtual device for one platform. Equivalent to stopApp.",
         }),
       ),
   )
@@ -90,7 +91,7 @@ export const DevicePreviewGroup = HttpApiGroup.make("server.devicePreview")
           identifier: "v2.devicePreview.runApp",
           summary: "Build and run the app",
           description:
-            "Build the native project for one platform, install it on the running simulator or emulator, and launch it. Expo apps are prebuilt first, and React Native apps get a Metro bundler started for them. Apps from other locations are stopped first: one project runs at a time. Returns immediately; poll the get endpoint for progress.",
+            "Start and stream one virtual device, build the location's native project, install it and launch it on that same device. Expo apps are prebuilt first, and React Native apps get Metro started when needed. Only an existing run on the same platform is replaced; the other platform is untouched. Returns immediately; poll the get endpoint for progress.",
         }),
       ),
   )
@@ -103,9 +104,9 @@ export const DevicePreviewGroup = HttpApiGroup.make("server.devicePreview")
       .annotateMerge(
         OpenApi.annotations({
           identifier: "v2.devicePreview.focus",
-          summary: "Make this location the running project",
+          summary: "Read the focused location's device status",
           description:
-            "Called when the user switches to this location. If another location's app is running, stop it and start this one, relaunching the installed app when possible. Does nothing when no project is running.",
+            "Compatibility endpoint that returns device status without starting, stopping or transferring devices. Switching locations never starts a build.",
         }),
       ),
   )
@@ -120,7 +121,8 @@ export const DevicePreviewGroup = HttpApiGroup.make("server.devicePreview")
         OpenApi.annotations({
           identifier: "v2.devicePreview.stopApp",
           summary: "Stop the running app",
-          description: "Cancel an in-flight build, or terminate the app if it is already running on the device.",
+          description:
+            "Cancel the location's in-flight build, terminate its app, stop its preview stream and shut down its virtual device for the selected platform. Other locations and platforms are untouched. Manually started Metro remains running.",
         }),
       ),
   )

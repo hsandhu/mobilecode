@@ -2847,6 +2847,7 @@ export type DevicePreviewGetOutput = {
       readonly directory?: string
       readonly target?: string
       readonly appID?: string
+      readonly device?: string
       readonly step?: string
       readonly error?: string
       readonly log: ReadonlyArray<string>
@@ -2898,6 +2899,7 @@ export type DevicePreviewStartOutput = {
       readonly directory?: string
       readonly target?: string
       readonly appID?: string
+      readonly device?: string
       readonly step?: string
       readonly error?: string
       readonly log: ReadonlyArray<string>
@@ -2949,6 +2951,7 @@ export type DevicePreviewStopOutput = {
       readonly directory?: string
       readonly target?: string
       readonly appID?: string
+      readonly device?: string
       readonly step?: string
       readonly error?: string
       readonly log: ReadonlyArray<string>
@@ -2999,6 +3002,7 @@ export type DevicePreviewStartBundlerOutput = {
       readonly directory?: string
       readonly target?: string
       readonly appID?: string
+      readonly device?: string
       readonly step?: string
       readonly error?: string
       readonly log: ReadonlyArray<string>
@@ -3049,6 +3053,7 @@ export type DevicePreviewStopBundlerOutput = {
       readonly directory?: string
       readonly target?: string
       readonly appID?: string
+      readonly device?: string
       readonly step?: string
       readonly error?: string
       readonly log: ReadonlyArray<string>
@@ -3101,6 +3106,7 @@ export type DevicePreviewRunAppOutput = {
       readonly directory?: string
       readonly target?: string
       readonly appID?: string
+      readonly device?: string
       readonly step?: string
       readonly error?: string
       readonly log: ReadonlyArray<string>
@@ -3151,6 +3157,7 @@ export type DevicePreviewFocusOutput = {
       readonly directory?: string
       readonly target?: string
       readonly appID?: string
+      readonly device?: string
       readonly step?: string
       readonly error?: string
       readonly log: ReadonlyArray<string>
@@ -3202,6 +3209,7 @@ export type DevicePreviewStopAppOutput = {
       readonly directory?: string
       readonly target?: string
       readonly appID?: string
+      readonly device?: string
       readonly step?: string
       readonly error?: string
       readonly log: ReadonlyArray<string>
