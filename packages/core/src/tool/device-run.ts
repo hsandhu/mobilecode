@@ -27,7 +27,7 @@ const ServerStatus = Schema.Literals(["starting", "running", "exited"])
 export const Input = Schema.Struct({
   action: Schema.Literals(["run", "stop", "status"]).annotate({
     description:
-      "run: build, install and launch the app, then wait for the result. stop: terminate the running app or cancel its build. status: report the current state without changing anything.",
+      "run: start and stream the virtual device, build, install and launch the app, then wait for the result. stop: cancel its build, terminate its app, close its stream and shut down its virtual device. status: report the current state without changing anything.",
   }),
   platform: Schema.optional(Schema.Literals(["ios", "android", "all"])).annotate({
     description: "Which device to target. Defaults to all detected platforms.",

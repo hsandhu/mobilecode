@@ -695,6 +695,62 @@ export async function androidDevice() {
     .find((parts) => parts[1]?.trim() === "device")?.[0]
 }
 
+/** Select one virtual device before launching its stream, so build and preview cannot diverge. */
+export async function deviceTarget(platform: Platform) {
+  if (platform === "ios") {
+    const output = await capture("xcrun", ["simctl", "list", "devices", "available", "-j"])
+    const parsed = parseJson<{ devices?: Record<string, { udid: string; state: string; isAvailable?: boolean }[]> }>(
+      output,
+    )
+    const devices = Object.entries(parsed?.devices ?? {})
+      .filter(([runtime]) => runtime.includes(".iOS-"))
+      .flatMap(([, devices]) => devices)
+      .filter((device) => device.isAvailable !== false)
+    const device = devices.find((device) => device.state === "Booted") ?? devices[0]
+    if (!device) return
+    return {
+      id: device.udid,
+      boot: device.state === "Booted" ? undefined : { command: "xcrun", args: ["simctl", "boot", device.udid] },
+    }
+  }
+  const output = await capture(adb(), ["devices"])
+  const serial = output
+    .split("\n")
+    .map((line) => line.trim().split(/\s+/))
+    .find(([id, state]) => /^emulator-\d+$/.test(id ?? "") && state === "device")?.[0]
+  if (serial) return { id: serial, boot: undefined }
+  const sdk = androidSdk()
+  const command = sdk
+    ? path.join(sdk, "emulator", process.platform === "win32" ? "emulator.exe" : "emulator")
+    : "emulator"
+  const name = (await capture(command, ["-list-avds"]))
+    .split(/\r?\n/)
+    .find((line) => line.trim())
+    ?.trim()
+  if (!name) return
+  // Emulator console and adb use a pair of ports. Reserve an explicit identity for cancellation.
+  for (let port = 5554; port <= 5682; port += 2) {
+    if (!(await available(port)) || !(await available(port + 1))) continue
+    return { id: `emulator-${port}`, boot: { command, args: ["-avd", name, "-port", String(port), "-no-boot-anim"] } }
+  }
+}
+
+export async function deviceReady(platform: Platform, id: string) {
+  if (platform === "android")
+    return (await capture(adb(), ["-s", id, "shell", "getprop", "sys.boot_completed"])).trim() === "1"
+  const output = await capture("xcrun", ["simctl", "list", "devices", "booted", "-j"])
+  const parsed = parseJson<{ devices?: Record<string, { udid: string; state: string }[]> }>(output)
+  return Object.values(parsed?.devices ?? {})
+    .flat()
+    .some((device) => device.udid === id && device.state === "Booted")
+}
+
+export async function shutdownDevice(platform: Platform, id: string) {
+  if (platform === "ios") return exec("xcrun", ["simctl", "shutdown", id], {}).exit
+  // Never issue a shutdown to a physical Android device.
+  if (/^emulator-\d+$/.test(id)) return exec(adb(), ["-s", id, "emu", "kill"], {}).exit
+}
+
 /** Primary CPU ABI of a device, e.g. `arm64-v8a`. */
 export async function androidAbi(serial: string) {
   const output = await capture(adb(), ["-s", serial, "shell", "getprop", "ro.product.cpu.abi"])

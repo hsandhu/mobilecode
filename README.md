@@ -5,7 +5,7 @@ MobileCode is a fork of [opencode](https://github.com/anomalyco/opencode) that k
 
 ### React Native
 
-Run a React Native app on iOS and Android from one Play button. MobileCode starts one Metro server, builds both native projects, and launches them in embedded Simulator and Emulator panes.
+Run a React Native app on iOS, Android, or both using independent controls. The React Native button starts Metro only. Each platform's Play button starts its virtual device and embedded stream, then builds, installs, and launches the current tab's project. Metro is started automatically when needed and shared by both platforms.
 
 <p align="center">
   <img src=".github/assets/react-native-demo.gif" alt="MobileCode building and running a React Native app on iOS and Android" width="100%">
@@ -19,19 +19,19 @@ Run a React Native app on iOS and Android from one Play button. MobileCode start
 - **Android**: detects Gradle projects and Expo apps, then runs [serve-avd](https://github.com/hsandhu/serve-avd) and embeds the Android Emulator stream.
 - **Expo and React Native**: Play generates the native project with `expo prebuild` when needed, installs pods, starts Metro, and connects the emulator to it through `adb reverse`. One Metro serves both platforms.
 - **Agent-driven runs**: the `device_run` tool lets the agent build and launch the app itself, wait for the result, and read the build error and log tail, so it can fix a failing build without you pasting logs. The device pane opens when a run starts.
-- **One project at a time**: the simulator, emulator and Metro port are shared, so starting a project stops any other project's apps first. Switching to a tab whose project was running brings it back, relaunching the installed app without a rebuild when it can.
+- **Independent platforms**: starting a project replaces only the previous run on that platform. Opening the pane or switching tabs never starts a device or build. Metro uses one shared port; if another project's Metro owns it, stop that Metro explicitly before running a different JavaScript project.
 - Everything else opencode does: terminal UI, desktop app, web UI, any model provider, MCP, plugins, and skills.
 
 ### How the device pane works
 
-Open a session in a mobile project and the device pane opens by itself, alongside your conversation. It starts `npx serve-sim` or `npx serve-avd` on the machine running the MobileCode server and streams the simulator or emulator into the app, with Start, Stop, Reload and Open in browser controls. Projects are detected up to two directories below the session root, so an app in a subfolder is still found.
+Open a session in a mobile project and the device pane opens by itself, alongside your conversation, without starting anything. Its Start and Stop controls perform the same full lifecycle as the toolbar controls. Running a platform starts `npx serve-sim` or `npx serve-avd` on the machine running the MobileCode server, pinned to the device used by the build. Reload refreshes only the stream. Projects are detected up to two directories below the session root, so an app in a subfolder is still found. Each platform has a build-log toggle, and the shared Metro status bar has its own log toggle.
 
 ### Build and run
 
 The session titlebar carries an Xcode-style run control for every detected platform, showing the current build status next to it.
 
-- **Play** builds the native project, installs it on the running simulator or emulator, and launches it. On iOS that is `xcodebuild` against the first shared scheme, then `simctl install` and `simctl launch`. On Android it is `./gradlew :<module>:assembleDebug`, then `adb install -r -g` and an explicit launch intent.
-- **Stop** cancels a build in flight, or terminates the app on the device when it is already running.
+- **Play** starts the selected platform's virtual device and stream, builds the native project, installs it on that same device, and launches it. On iOS that is `xcodebuild` against the first shared scheme, then `simctl install` and `simctl launch`. On Android it is `./gradlew :<module>:assembleDebug`, then `adb install -r -g` and an explicit launch intent. Expo uses `expo prebuild` when needed followed by this native pipeline, rather than invoking `expo run:ios` or `expo run:android` directly.
+- **Stop** cancels an in-flight build, terminates the app, closes its stream, and shuts down its simulator or emulator. The other platform remains running. Metro started with the React Native button stays running until explicitly stopped; automatically started Metro stops after its last app stops.
 - Status moves through Building, Installing, Launching and Running, and a failed build shows the first compiler or Gradle error with the full log one click away in the device pane.
 
 The same operations are available over HTTP:

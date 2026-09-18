@@ -2847,6 +2847,7 @@ export type DevicePreviewGetOutput = {
       readonly directory?: string
       readonly target?: string
       readonly appID?: string
+      readonly device?: string
       readonly step?: string
       readonly error?: string
       readonly log: ReadonlyArray<string>
@@ -2898,6 +2899,7 @@ export type DevicePreviewStartOutput = {
       readonly directory?: string
       readonly target?: string
       readonly appID?: string
+      readonly device?: string
       readonly step?: string
       readonly error?: string
       readonly log: ReadonlyArray<string>
@@ -2949,6 +2951,109 @@ export type DevicePreviewStopOutput = {
       readonly directory?: string
       readonly target?: string
       readonly appID?: string
+      readonly device?: string
+      readonly step?: string
+      readonly error?: string
+      readonly log: ReadonlyArray<string>
+      readonly startedAt?: number
+      readonly finishedAt?: number
+    }>
+  }
+}
+
+export type DevicePreviewStartBundlerInput = {
+  readonly location?: {
+    readonly location?: { readonly directory?: string | undefined; readonly workspace?: string | undefined } | undefined
+  }["location"]
+}
+
+export type DevicePreviewStartBundlerOutput = {
+  readonly location: {
+    readonly directory: string
+    readonly workspaceID?: string
+    readonly project: { readonly id: string; readonly directory: string }
+  }
+  readonly data: {
+    readonly platforms: ReadonlyArray<"ios" | "android">
+    readonly framework?: "expo" | "react-native" | "native"
+    readonly bundler?: {
+      readonly framework: "expo" | "react-native" | "native"
+      readonly directory: string
+      readonly status: "starting" | "running" | "exited"
+      readonly command: string
+      readonly url?: string
+      readonly pid?: number
+      readonly exitCode?: number
+      readonly log: ReadonlyArray<string>
+    }
+    readonly servers: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly status: "starting" | "running" | "exited"
+      readonly command: string
+      readonly url?: string
+      readonly pid?: number
+      readonly exitCode?: number
+      readonly log: ReadonlyArray<string>
+    }>
+    readonly builds: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly framework?: "expo" | "react-native" | "native"
+      readonly status: "idle" | "building" | "installing" | "launching" | "running" | "failed"
+      readonly directory?: string
+      readonly target?: string
+      readonly appID?: string
+      readonly device?: string
+      readonly step?: string
+      readonly error?: string
+      readonly log: ReadonlyArray<string>
+      readonly startedAt?: number
+      readonly finishedAt?: number
+    }>
+  }
+}
+
+export type DevicePreviewStopBundlerInput = {
+  readonly location?: {
+    readonly location?: { readonly directory?: string | undefined; readonly workspace?: string | undefined } | undefined
+  }["location"]
+}
+
+export type DevicePreviewStopBundlerOutput = {
+  readonly location: {
+    readonly directory: string
+    readonly workspaceID?: string
+    readonly project: { readonly id: string; readonly directory: string }
+  }
+  readonly data: {
+    readonly platforms: ReadonlyArray<"ios" | "android">
+    readonly framework?: "expo" | "react-native" | "native"
+    readonly bundler?: {
+      readonly framework: "expo" | "react-native" | "native"
+      readonly directory: string
+      readonly status: "starting" | "running" | "exited"
+      readonly command: string
+      readonly url?: string
+      readonly pid?: number
+      readonly exitCode?: number
+      readonly log: ReadonlyArray<string>
+    }
+    readonly servers: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly status: "starting" | "running" | "exited"
+      readonly command: string
+      readonly url?: string
+      readonly pid?: number
+      readonly exitCode?: number
+      readonly log: ReadonlyArray<string>
+    }>
+    readonly builds: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly framework?: "expo" | "react-native" | "native"
+      readonly status: "idle" | "building" | "installing" | "launching" | "running" | "failed"
+      readonly directory?: string
+      readonly target?: string
+      readonly appID?: string
+      readonly device?: string
       readonly step?: string
       readonly error?: string
       readonly log: ReadonlyArray<string>
@@ -3001,6 +3106,7 @@ export type DevicePreviewRunAppOutput = {
       readonly directory?: string
       readonly target?: string
       readonly appID?: string
+      readonly device?: string
       readonly step?: string
       readonly error?: string
       readonly log: ReadonlyArray<string>
@@ -3051,6 +3157,7 @@ export type DevicePreviewFocusOutput = {
       readonly directory?: string
       readonly target?: string
       readonly appID?: string
+      readonly device?: string
       readonly step?: string
       readonly error?: string
       readonly log: ReadonlyArray<string>
@@ -3102,6 +3209,7 @@ export type DevicePreviewStopAppOutput = {
       readonly directory?: string
       readonly target?: string
       readonly appID?: string
+      readonly device?: string
       readonly step?: string
       readonly error?: string
       readonly log: ReadonlyArray<string>

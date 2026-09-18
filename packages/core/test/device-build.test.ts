@@ -1,5 +1,5 @@
 import path from "path"
-import { describe, expect, test } from "bun:test"
+import { describe, expect, spyOn, test } from "bun:test"
 import { DeviceBuild } from "@opencode-ai/core/device-build"
 import { tmpdir } from "./fixture/tmpdir"
 
@@ -224,6 +224,43 @@ describe("DeviceBuild.freePort", () => {
 })
 
 describe("DeviceBuild android helpers", () => {
+  test("selects an emulator even when a physical Android device is listed first", async () => {
+    const capture = spyOn(DeviceBuild, "capture").mockResolvedValue(
+      "List of devices attached\nphysical-phone\tdevice\nemulator-5558\tdevice\n",
+    )
+    try {
+      expect(await DeviceBuild.deviceTarget("android")).toEqual({ id: "emulator-5558", boot: undefined })
+    } finally {
+      capture.mockRestore()
+    }
+  })
+
+  test("selects an available iOS simulator, not a booted watch", async () => {
+    const capture = spyOn(DeviceBuild, "capture").mockResolvedValue(
+      JSON.stringify({
+        devices: {
+          "com.apple.CoreSimulator.SimRuntime.watchOS-12-0": [{ udid: "WATCH", state: "Booted" }],
+          "com.apple.CoreSimulator.SimRuntime.iOS-26-0": [
+            { udid: "UNAVAILABLE", state: "Booted", isAvailable: false },
+            { udid: "IOS", state: "Shutdown", isAvailable: true },
+          ],
+        },
+      }),
+    )
+    try {
+      expect(await DeviceBuild.deviceTarget("ios")).toEqual({
+        id: "IOS",
+        boot: { command: "xcrun", args: ["simctl", "boot", "IOS"] },
+      })
+    } finally {
+      capture.mockRestore()
+    }
+  })
+
+  test("does not issue a shutdown to physical Android devices", async () => {
+    expect(await DeviceBuild.shutdownDevice("android", "physical-phone")).toBeUndefined()
+  })
+
   test("reads free space from df output", () => {
     const output =
       "Filesystem       1K-blocks    Used Available Use% Mounted on\n/dev/block/dm-53   6082144 5529020    553124  91% /data\n"

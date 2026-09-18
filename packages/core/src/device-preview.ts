@@ -35,7 +35,9 @@ export interface Interface {
     env?: Record<string, string>
   }) => Effect.Effect<Info>
   readonly stop: (input: Target) => Effect.Effect<Info>
-  /** Build, install and launch the app on the running simulator or emulator. */
+  readonly startBundler: (input: { directory: string; env?: Record<string, string> }) => Effect.Effect<Info>
+  readonly stopBundler: (input: { directory: string }) => Effect.Effect<Info>
+  /** Start and stream a virtual device, then build, install and launch this location's app. */
   readonly runApp: (input: {
     directory: string
     platform: Platform
@@ -43,12 +45,9 @@ export interface Interface {
     /** Launch the app installed by the previous run when it is still on the device. */
     relaunch?: boolean
   }) => Effect.Effect<Info>
-  /** Cancel an in-flight build, or terminate the app if it is already running. */
+  /** Cancel the build, terminate the app, close its stream and shut down its virtual device. */
   readonly stopApp: (input: Target) => Effect.Effect<Info>
-  /**
-   * The user switched to this location. Stop apps from other locations and start this one, if
-   * something else was running or this project was parked by an earlier switch.
-   */
+  /** Compatibility endpoint: switching locations only reads status; running is always explicit. */
   readonly focus: (input: { directory: string; env?: Record<string, string> }) => Effect.Effect<Info>
 }
 
@@ -82,6 +81,8 @@ type ServerState = {
 
 type Active = {
   state: ServerState
+  directory: string
+  device: string
   process?: ChildProcess
 }
 
@@ -100,8 +101,11 @@ type BuildState = {
 }
 
 type ActiveBuild = {
+  directory: string
   state: BuildState
   process?: ChildProcess
+  deviceProcess?: ChildProcess
+  preview?: Active
   cancelled: boolean
   /** Settles when the detached pipeline has fully unwound, so a stop can wait for it. */
   done?: Promise<void>
@@ -111,8 +115,6 @@ type ActiveBuild = {
   root?: string
   /** What the last successful run put on `device`, so a later run can relaunch without building. */
   installed?: Installed
-  /** Stopped because another location took over, so a switch back should bring it up again. */
-  parked?: boolean
 }
 
 type Installed = { readonly appID: string; readonly activity?: string }
@@ -131,6 +133,8 @@ type BundlerState = {
 type ActiveBundler = {
   state: BundlerState
   process?: ChildProcess
+  /** A user-started Metro stays up when the last native app is stopped. */
+  manual: boolean
   /** Settles once Metro answers or the process gives up; never rejects. */
   ready: Promise<void>
 }
@@ -144,6 +148,8 @@ const layer = Layer.effect(
   Effect.gen(function* () {
     const servers = new Map<Platform, Active>()
     const builds = new Map<string, ActiveBuild>()
+    const owners = new Map<Platform, ActiveBuild>()
+    const transitions = new Map<Platform, Promise<void>>()
     // One Metro per JavaScript root, shared by the iOS and Android apps built from it.
     const bundlers = new Map<string, ActiveBundler>()
 
@@ -152,7 +158,10 @@ const layer = Layer.effect(
     const onExit = () => {
       for (const active of servers.values()) terminate(active.process, active.state.status === "exited")
       for (const bundler of bundlers.values()) terminate(bundler.process, bundler.state.status === "exited")
-      for (const build of builds.values()) terminate(build.process, false)
+      for (const build of builds.values()) {
+        terminate(build.process, false)
+        terminate(build.deviceProcess, false)
+      }
     }
     const onSignal = (signal: NodeJS.Signals) => {
       onExit()
@@ -175,7 +184,11 @@ const layer = Layer.effect(
     yield* Effect.addFinalizer(() =>
       Effect.promise(async () => {
         unhook()
-        for (const build of builds.values()) terminate(build.process, false)
+        for (const build of builds.values()) {
+          build.cancelled = true
+          terminate(build.process, false)
+          terminate(build.deviceProcess, false)
+        }
         builds.clear()
         await Promise.all([...servers.values(), ...bundlers.values()].map(kill))
         servers.clear()
@@ -194,16 +207,30 @@ const layer = Layer.effect(
         platforms: projects.map((project) => project.platform),
         framework: projects[0]?.framework,
         bundler: bundler ? { ...bundler.state, log: [...bundler.state.log] } : undefined,
-        servers: [...servers.values()].map((active) => ({ ...active.state, log: [...active.state.log] })),
+        servers: [...servers.values()]
+          .filter((active) => active.directory === input.directory)
+          .map((active) => ({ ...active.state, log: [...active.state.log] })),
         builds: [...builds.entries()]
           .filter(([key]) => key.startsWith(buildPrefix(input.directory)))
-          .map(([, build]) => ({ ...build.state, log: [...build.state.log] })),
+          .map(([, build]) => ({ ...build.state, device: build.device, log: [...build.state.log] })),
       }
     })
 
-    const launchPreview = async (input: { directory: string; platform: Platform; env?: Record<string, string> }) => {
+    const launchPreview = async (input: {
+      directory: string
+      platform: Platform
+      device: string
+      env?: Record<string, string>
+      cancelled: () => boolean
+    }) => {
+      if (input.cancelled()) return
       const current = servers.get(input.platform)
-      if (current && current.state.status !== "exited") return
+      if (current && current.state.status !== "exited" && current.device === input.device) {
+        current.directory = input.directory
+        return current
+      }
+      if (current) await kill(current)
+      if (input.cancelled()) return
       const spec = COMMANDS[input.platform]
       const state: ServerState = {
         platform: input.platform,
@@ -212,20 +239,20 @@ const layer = Layer.effect(
         log: [],
       }
       // Claim the slot before the first await so a second caller cannot start a duplicate.
-      const active: Active = { state }
+      const active: Active = { state, directory: input.directory, device: input.device }
       servers.set(input.platform, active)
       const port = await DeviceBuild.freePort(PORTS[input.platform])
       // A stop that landed during the lookup already removed the slot; spawning now would orphan.
-      if (servers.get(input.platform) !== active) {
+      if (input.cancelled() || servers.get(input.platform) !== active) {
         state.status = "exited"
         return
       }
       if (!port) {
         push(state.log, `No free port found from ${PORTS[input.platform]} upward.`)
         state.status = "exited"
-        return
+        return active
       }
-      const args = spec.args(port)
+      const args = [...spec.args(port), input.device]
       state.command = [spec.command, ...args].join(" ")
       // Same process group as the server so a terminal Ctrl+C reaches npx and serve-* as well.
       // stdin is the guard's lifeline: it closes when this process dies, however it dies.
@@ -261,19 +288,10 @@ const layer = Layer.effect(
         state.exitCode = code ?? undefined
         state.url = undefined
       })
+      return active
     }
 
-    const start = Effect.fn("DevicePreview.start")(function* (input: {
-      directory: string
-      platform: Platform
-      env?: Record<string, string>
-    }) {
-      yield* Effect.promise(() => launchPreview(input))
-      return yield* info(input)
-    })
-
-    // Pressing play with nothing booted should boot something, the way Xcode's Run does.
-    // The preview server is what owns devices, so start it and wait for one to appear.
+    // Pin one virtual device for boot, streaming, installation and shutdown.
     const ensureDevice = async (
       platform: Platform,
       directory: string,
@@ -281,21 +299,54 @@ const layer = Layer.effect(
       active: ActiveBuild,
       report: Report,
     ) => {
-      const find = () => (platform === "ios" ? DeviceBuild.bootedSimulator() : DeviceBuild.androidDevice())
-      const existing = await find()
-      if (existing) return existing
+      const target = await DeviceBuild.deviceTarget(platform)
+      if (active.cancelled || !target) return
+      active.device = target.id
       report.step(platform === "ios" ? "Starting simulator" : "Starting emulator")
-      await launchPreview({ directory, platform, env })
+      let bootExited = false
+      if (target.boot) {
+        const boot = DeviceBuild.exec(target.boot.command, target.boot.args, { cwd: directory, env }, report.log)
+        if (platform === "android") {
+          active.deviceProcess = boot.child
+          boot.child.once("error", (error) => report.log(error.message))
+          void boot.exit.then(() => {
+            bootExited = true
+          })
+        }
+        if (platform === "ios") {
+          active.process = boot.child
+          const code = await boot.exit
+          active.process = undefined
+          if (active.cancelled || code !== 0) return
+        }
+      }
       const deadline = Date.now() + DEVICE_WAIT_MS
       while (Date.now() < deadline && !active.cancelled) {
-        await new Promise((resolve) => setTimeout(resolve, 2000))
-        const found = await find()
-        if (found) return found
-        // Stopped from the pane, or died: nothing is going to boot a device any more.
-        const server = servers.get(platform)
-        if (!server || server.state.status === "exited") return undefined
+        if (bootExited) {
+          report.fail("The emulator exited before it finished booting. Open the build log for details.")
+          return
+        }
+        if (await DeviceBuild.deviceReady(platform, target.id)) break
+        await new Promise((resolve) => setTimeout(resolve, 500))
       }
-      return undefined
+      if (active.cancelled || Date.now() >= deadline) return
+      // An already booted device still needs a stream (including after a prior stream failure).
+      const server = await launchPreview({
+        directory: active.directory,
+        platform,
+        device: target.id,
+        env,
+        cancelled: () => active.cancelled,
+      })
+      active.preview = server
+      if (active.cancelled || !server) return
+      while (Date.now() < deadline && !active.cancelled && server.state.status === "starting")
+        await new Promise((resolve) => setTimeout(resolve, 200))
+      if (active.cancelled || server.state.status !== "running") {
+        report.fail(server.state.log.at(-1) ?? "Could not start the device preview stream.")
+        return
+      }
+      return target.id
     }
 
     // Debug builds load their JavaScript from Metro at launch, so it must be up before the app is.
@@ -312,39 +363,65 @@ const layer = Layer.effect(
         command: [spec.command, ...spec.args].join(" "),
         log: [],
       }
-      const active = { state } as ActiveBundler
+      const active: ActiveBundler = { state, manual: false, ready: Promise.resolve() }
+      const conflict = [...bundlers.values()].find(
+        (value) => value.state.directory !== root && value.state.status !== "exited",
+      )
+      if (conflict) {
+        state.status = "exited"
+        push(
+          state.log,
+          `Metro is serving ${conflict.state.directory}. Stop that project's Metro before starting this project.`,
+        )
+        bundlers.set(root, active)
+        return active
+      }
+      const abandoned = () => bundlers.get(root) !== active || active.state.status === "exited"
       active.ready = (async () => {
+        const node = await nodeEnvironment({ root, framework }, env)
+        if (abandoned()) return
+        if ("problem" in node) {
+          state.status = "exited"
+          push(state.log, node.problem)
+          return
+        }
+        if (node.note) push(state.log, node.note)
         // Something (a terminal, an earlier session) may already be serving this port. Reuse it
         // rather than have Expo offer to pick another port that the app would not know about.
-        if (await DeviceBuild.metroRunning(port)) {
+        const running = await DeviceBuild.metroRunning(port)
+        // A stop can land during the port check. Do not spawn an untracked Metro afterwards.
+        if (abandoned()) return
+        if (running) {
           const owner = await DeviceBuild.portOwner(port)
-          // Unknown owner (no lsof) is assumed to be ours, as before. A Metro serving another
-          // project would hand this app the wrong bundle, so replace it.
+          if (abandoned()) return
+          // Never replace a different project's Metro or serve this app the wrong bundle.
           // Ours when started inside the project, or from a workspace root above it (not from
           // somewhere as broad as the home directory).
           const ours =
-            !owner?.cwd ||
-            within(owner.cwd, root) ||
-            (within(root, owner.cwd) && owner.cwd !== "/" && owner.cwd !== os.homedir())
+            owner?.cwd &&
+            (within(owner.cwd, root) || (within(root, owner.cwd) && owner.cwd !== "/" && owner.cwd !== os.homedir()))
           if (ours) {
             state.command = `Metro already running on port ${port}`
             state.url = DeviceBuild.metroUrl(port)
+            state.pid = owner?.pid
             state.status = "running"
             return
           }
-          push(state.log, `Stopping Metro for ${owner.cwd} (pid ${owner.pid}) to serve this project instead`)
-          try {
-            process.kill(owner.pid, "SIGTERM")
-          } catch {}
-          const gone = Date.now() + STOP_TIMEOUT_MS
-          while (Date.now() < gone && (await DeviceBuild.metroRunning(port)))
-            await new Promise((resolve) => setTimeout(resolve, 200))
+          push(
+            state.log,
+            owner?.cwd
+              ? `Metro is serving ${owner.cwd}. Stop that project's Metro before starting this project.`
+              : `Metro is already running on port ${port}, but its project could not be verified. Stop it before starting this project.`,
+          )
+          state.status = "exited"
+          return
         }
+        if (abandoned()) return
         const wrapped = DeviceBuild.guarded(spec.command, spec.args)
         const child = launch(wrapped.command, wrapped.args, {
           cwd: root,
           // Not CI mode: Expo disables file watching and reloads under CI=1.
-          env: { ...process.env, ...env, EXPO_NO_TELEMETRY: "1", FORCE_COLOR: "0", NO_COLOR: "1" },
+          env: { ...process.env, ...node.env, EXPO_NO_TELEMETRY: "1", FORCE_COLOR: "0", NO_COLOR: "1" },
           stdio: ["pipe", "pipe", "pipe"],
           windowsHide: true,
         })
@@ -372,11 +449,20 @@ const layer = Layer.effect(
           await new Promise((resolve) => setTimeout(resolve, 1000))
           if (state.status !== "starting") break
           if (await DeviceBuild.metroRunning(port)) {
+            if (abandoned()) return
             state.url = DeviceBuild.metroUrl(port)
             state.status = "running"
           }
         }
-      })()
+        if (state.status === "starting") {
+          push(state.log, "Metro did not become ready before the startup timeout.")
+          await kill(active)
+          state.status = "exited"
+        }
+      })().catch((error: unknown) => {
+        push(state.log, error instanceof Error ? error.message : String(error))
+        state.status = "exited"
+      })
       bundlers.set(root, active)
       return active
     }
@@ -389,17 +475,36 @@ const layer = Layer.effect(
       )
       if (others) return
       const active = bundlers.get(root)
-      if (!active) return
+      if (!active || active.manual) return
       bundlers.delete(root)
       await kill(active)
     }
 
-    const stop = Effect.fn("DevicePreview.stop")(function* (input: Target) {
-      const active = servers.get(input.platform)
-      if (active) {
-        servers.delete(input.platform)
-        yield* Effect.promise(() => kill(active))
-      }
+    const startBundler = Effect.fn("DevicePreview.startBundler")(function* (input: {
+      directory: string
+      env?: Record<string, string>
+    }) {
+      const project = DeviceBuild.findProjects(input.directory).find((candidate) => candidate.framework !== "native")
+      if (!project) return yield* info(input)
+      ensureBundler(project.root, project.framework, input.env).manual = true
+      return yield* info(input)
+    })
+
+    const stopBundler = Effect.fn("DevicePreview.stopBundler")(function* (input: { directory: string }) {
+      const matches = [...bundlers.values()].filter((active) => within(active.state.directory, input.directory))
+      yield* Effect.promise(async () => {
+        for (const active of matches) {
+          if (active.process) {
+            await kill(active)
+          } else if (active.state.pid && active.state.status !== "exited") {
+            try {
+              process.kill(active.state.pid, "SIGTERM")
+            } catch {}
+          }
+          active.state.status = "exited"
+          active.state.url = undefined
+        }
+      })
       return yield* info(input)
     })
 
@@ -412,9 +517,14 @@ const layer = Layer.effect(
       const key = buildKey(input)
       const existing = builds.get(key)
       if (existing && BUSY.includes(existing.state.status)) return yield* info(input)
-      // One project at a time: the devices and the Metro port are shared.
-      yield* Effect.promise(() => park(input.directory))
+      const previous = input.relaunch && existing ? { ...existing } : undefined
+      const owner = owners.get(input.platform)
+      if (owner) {
+        owner.cancelled = true
+        terminate(owner.process, false)
+      }
       const active: ActiveBuild = {
+        directory: input.directory,
         state: {
           platform: input.platform,
           status: "building",
@@ -425,13 +535,28 @@ const layer = Layer.effect(
         cancelled: false,
       }
       builds.set(key, active)
+      owners.set(input.platform, active)
       hook()
-      // Detached from the request: the UI polls `info` for progress.
-      active.done = execute(active, input.directory, input.platform, input.env, {
-        ensureDevice,
-        ensureBundler,
-        previous: input.relaunch ? existing : undefined,
+      // Serialize ownership changes, but never hold the queue for an entire build: Stop must
+      // be able to cancel it. Claim the build before yielding so double-clicks cannot duplicate it.
+      active.done = transition(input.platform, async () => {
+        if (owner) await halt(owner)
       })
+        .then(() => {
+          if (active.cancelled) return
+          return execute(active, input.directory, input.platform, input.env, {
+            ensureDevice,
+            ensureBundler,
+            previous,
+          })
+        })
+        .catch((error: unknown) => {
+          if (active.cancelled) return
+          active.state.status = "failed"
+          active.state.error = error instanceof Error ? error.message : String(error)
+          active.state.step = undefined
+          active.state.finishedAt = Date.now()
+        })
       return yield* info(input)
     })
 
@@ -442,32 +567,39 @@ const layer = Layer.effect(
       const proc = active.process
       active.process = undefined
       if (proc) terminate(proc, false)
+      terminate(active.deviceProcess, false)
+      await settle(active, proc)
       await quit(active)
+      const server = servers.get(active.state.platform)
+      if (server && server === active.preview) {
+        servers.delete(active.state.platform)
+        await kill(server)
+      }
+      if (active.device) await DeviceBuild.shutdownDevice(active.state.platform, active.device)
+      active.device = undefined
+      active.deviceProcess = undefined
+      active.preview = undefined
       active.state.status = "idle"
       active.state.step = undefined
       active.state.finishedAt = Date.now()
       await releaseBundler(active.root)
-      await settle(active, proc)
     }
 
-    const live = (build: ActiveBuild) => BUSY.includes(build.state.status) || build.state.status === "running"
-    const ofDirectory = (directory: string) =>
-      [...builds.entries()].filter(([key]) => key.startsWith(buildPrefix(directory))).map(([, build]) => build)
-
-    /** Stop every other location's apps, remembering that a switch back should revive them. */
-    const park = async (directory: string) => {
-      for (const [key, build] of builds) {
-        if (key.startsWith(buildPrefix(directory)) || !live(build)) continue
-        await halt(build)
-        build.parked = true
-      }
+    const transition = (platform: Platform, task: () => Promise<void>) => {
+      const next = (transitions.get(platform) ?? Promise.resolve()).then(task)
+      transitions.set(
+        platform,
+        next.catch(() => {}),
+      )
+      return next
     }
 
     const stopApp = Effect.fn("DevicePreview.stopApp")(function* (input: Target) {
       const active = builds.get(buildKey(input))
       if (!active) return yield* info(input)
-      active.parked = false
-      yield* Effect.promise(() => halt(active))
+      active.cancelled = true
+      if (active.process) terminate(active.process, false)
+      yield* Effect.promise(() => transition(input.platform, () => halt(active)))
       return yield* info(input)
     })
 
@@ -475,21 +607,10 @@ const layer = Layer.effect(
       directory: string
       env?: Record<string, string>
     }) {
-      const mine = ofDirectory(input.directory)
-      const others = [...builds.entries()].some(
-        ([key, build]) => !key.startsWith(buildPrefix(input.directory)) && live(build),
-      )
-      const parked = mine.some((build) => build.parked)
-      // Merely opening a tab must not start a build; only a switch away from a running project,
-      // or back to one that a switch put away, changes what is on the devices.
-      if (!others && !parked) return yield* info(input)
-      if (mine.some(live)) return yield* info(input)
-      for (const platform of DeviceBuild.findProjects(input.directory).map((project) => project.platform))
-        yield* runApp({ directory: input.directory, platform, env: input.env, relaunch: true })
       return yield* info(input)
     })
 
-    return Service.of({ detect, info, start, stop, runApp, stopApp, focus })
+    return Service.of({ detect, info, start: runApp, stop: stopApp, startBundler, stopBundler, runApp, stopApp, focus })
   }),
 )
 
@@ -545,18 +666,11 @@ async function execute(
 
     // Expo and React Native pin a Node range; the login shell's default is often older. Find one
     // that fits and put it first on PATH for every step below, or stop before wasting a build.
-    if (project.framework !== "native") {
-      const ranges = DeviceBuild.nodeRequirement(project.root)
-      if (ranges.length > 0) {
-        const node = await DeviceBuild.resolveNode(ranges, { ...process.env, ...env })
-        if (active.cancelled) return
-        if ("problem" in node) return fail(node.problem)
-        if (node.bin) {
-          env = { ...env, PATH: `${node.bin}${path.delimiter}${env?.["PATH"] ?? process.env["PATH"] ?? ""}` }
-          if (node.note) log(node.note)
-        }
-      }
-    }
+    const node = await nodeEnvironment(project, env)
+    if (active.cancelled) return
+    if ("problem" in node) return fail(node.problem)
+    env = node.env
+    if (node.note) log(node.note)
 
     if (project.needsPrebuild) {
       const generated = await prebuild(active, project, env, report)
@@ -569,15 +683,18 @@ async function execute(
     // needs it at launch. After prebuild, so it never watches folders being rewritten underneath it.
     const bundler =
       project.framework === "native" ? undefined : runtime.ensureBundler(project.root, project.framework, env)
+    if (bundler?.state.status === "exited")
+      return fail(bundler.state.log.at(-1) ?? "Metro did not start. Open the log for details.")
 
     const device = await runtime.ensureDevice(platform, project.directory, env, active, report)
     if (active.cancelled) return
-    if (!device)
+    if (!device && active.state.status !== "failed")
       return fail(
         platform === "ios"
-          ? "Could not start a simulator. Open the device pane and start one."
-          : "Could not start an emulator. Open the device pane and start one, or create an AVD in Android Studio.",
+          ? "Could not start an iOS simulator. Check that an iOS simulator is available in Xcode."
+          : "Could not start an emulator. Create an AVD in Android Studio and check the build log.",
       )
+    if (!device) return
     active.device = device
 
     // Same device, app still installed from last time: bring it back without a build. Anything
@@ -615,6 +732,22 @@ async function execute(
     )
   } catch (error) {
     fail(error instanceof Error ? error.message : String(error))
+  }
+}
+
+async function nodeEnvironment(
+  project: Pick<DeviceBuild.Project, "root" | "framework">,
+  env: Record<string, string> | undefined,
+) {
+  if (project.framework === "native") return { env }
+  const ranges = DeviceBuild.nodeRequirement(project.root)
+  if (ranges.length === 0) return { env }
+  const node = await DeviceBuild.resolveNode(ranges, { ...process.env, ...env })
+  if ("problem" in node) return node
+  if (!node.bin) return { env, note: node.note }
+  return {
+    env: { ...env, PATH: `${node.bin}${path.delimiter}${env?.["PATH"] ?? process.env["PATH"] ?? ""}` },
+    note: node.note,
   }
 }
 
@@ -678,7 +811,9 @@ async function awaitBundler(bundler: ActiveBundler, report: Report) {
   if (bundler.state.status === "starting") report.step("Waiting for Metro")
   await bundler.ready
   if (bundler.state.status === "running") return true
-  const last = [...bundler.state.log].reverse().find((line) => /error|failed|EADDRINUSE|cannot/i.test(line))
+  const last =
+    [...bundler.state.log].reverse().find((line) => /error|failed|EADDRINUSE|cannot/i.test(line)) ??
+    bundler.state.log.at(-1)
   report.fail(last ? `Metro did not start: ${last.slice(0, 250)}` : "Metro did not start. Open the log for details.")
   return false
 }
@@ -754,7 +889,6 @@ async function reverseMetro(active: ActiveBuild, serial: string, report: Report)
 
 function finish(active: ActiveBuild, installed: Installed) {
   active.installed = installed
-  active.parked = false
   active.state.status = "running"
   active.state.step = undefined
   active.state.error = undefined
