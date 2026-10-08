@@ -7,8 +7,8 @@ name: Release macOS
 #   - Run it manually. The workflow reads that version and creates the matching tag.
 #
 # The release is created as a draft so it can be reviewed, then published from the GitHub UI
-# (or pass publish=true). The zip and latest-mac.yml are what the in-app updater reads, so keep
-# the asset names electron-builder chooses.
+# (or pass publish=true). Only the DMG is attached. The zip, blockmaps and latest-mac.yml that
+# electron-builder can produce exist for the in-app updater, so attach them again once it is enabled.
 #
 # Builds are intentionally unsigned for now. electron-builder.config.ts ad-hoc seals the bundle so
 # a downloaded copy is not reported as "damaged"; the first launch is refused, and the user allows
@@ -123,20 +123,34 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=4096
           OPENCODE_VERSION: ${{ steps.version.outputs.version }}
 
-      - name: Package and attach to release
+      - name: Package
         working-directory: packages/desktop
-        run: bun x electron-builder --mac --arm64 --publish always --config electron-builder.config.ts
+        run: bun x electron-builder --mac dmg --arm64 --publish never --config electron-builder.config.ts
+
+      - name: Attach the app to the release
+        working-directory: packages/desktop
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          DMG="dist/mobilecode-desktop-mac-arm64.dmg"
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --draft --verify-tag --title "$VERSION" --notes ""
+          fi
+          # A re-run on an existing draft may find update files an older run attached; keep only the app.
+          gh release view "$TAG" --json assets --jq '.assets[].name' \
+            | { grep -vxF "$(basename "$DMG")" || true; } \
+            | while read -r ASSET; do gh release delete-asset "$TAG" "$ASSET" --yes; done
+          gh release upload "$TAG" "$DMG" --clobber
 
-      - name: Keep the artifacts on the run too
+      - name: Keep the app on the run too
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: mobilecode-desktop-mac-arm64
-          path: |
-            packages/desktop/dist/*.dmg
-            packages/desktop/dist/*.zip
-            packages/desktop/dist/latest-mac.yml
+          path: packages/desktop/dist/*.dmg
           if-no-files-found: error
 
       - name: Publish release
