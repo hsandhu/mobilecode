@@ -9,8 +9,9 @@ import { createStore } from "solid-js/store"
 import { useLanguage } from "@/context/language"
 import { usePlatform } from "@/context/platform"
 import { useServerSDK } from "@/context/server-sdk"
+import { useServerSync } from "@/context/server-sync"
 import { devicePreviewUrl } from "@/utils/device-preview"
-import { createDeviceState, deviceBuildBusy, devicePreviewIcon } from "./device-state"
+import { createDeviceState, deviceBuildBusy, deviceFrameworkIcon, devicePreviewIcon } from "./device-state"
 
 const ALL_PLATFORMS: DevicePreview.Platform[] = ["ios", "android"]
 const LOG_TAIL = 40
@@ -127,6 +128,7 @@ function DevicePane(props: {
   classList?: Record<string, boolean | undefined>
 }) {
   const serverSDK = useServerSDK()
+  const serverSync = useServerSync()
   const platform = usePlatform()
   const language = useLanguage()
   let frame: HTMLIFrameElement | undefined
@@ -152,6 +154,18 @@ function DevicePane(props: {
     if (current?.status === "running")
       return { text: `${language.t("session.device.run.running")} · ${current.appID ?? ""}`.trim(), failed: false }
     return { text: url() ?? server()?.command ?? "", failed: false }
+  })
+
+  // Both apps load their JavaScript from one Metro, so a successful native build does not say
+  // which project's bundle is running. Name Metro's project beside every live JS run.
+  const metro = createMemo(() => {
+    const current = build()
+    const bundler = props.device.info()?.bundler
+    if (!current || !bundler || bundler.status === "exited") return
+    if (!deviceBuildBusy(current) && current.status !== "running") return
+    if (!deviceFrameworkIcon(current.framework ?? props.device.info()?.framework)) return
+    const home = serverSync().data.path.home
+    return { full: bundler.directory, short: home ? bundler.directory.replace(home, "~") : bundler.directory }
   })
 
   const reload = () => {
@@ -250,6 +264,21 @@ function DevicePane(props: {
           </Button>
         </Show>
       </div>
+      <Show when={metro()}>
+        {(value) => (
+          <div
+            data-slot="device-metro"
+            class="flex items-center gap-1.5 px-3 h-7 shrink-0 border-b border-border-weaker-base text-11-regular text-text-weak"
+          >
+            <AppIcon id="react" class="size-3.5 shrink-0" />
+            <span class="shrink-0">{language.t("session.device.bundler.label")}</span>
+            {/* Clip the start so the project folder stays visible; the LTR isolate keeps `~/` in front. */}
+            <span class="min-w-0 truncate-start text-text-base" title={value().full}>
+              <bdi dir="ltr">{value().short}</bdi>
+            </span>
+          </div>
+        )}
+      </Show>
       <div class="relative flex-1 min-h-0">
         <Switch>
           <Match when={running()}>

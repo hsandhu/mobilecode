@@ -120,6 +120,15 @@ for (const platforms of [["ios", "android"], ["ios"], ["android"]] as const) {
         ).toBeEnabled()
     }
 
+    // Only a live JavaScript run names the project Metro serves; the failed iOS build loads nothing.
+    const metro = page.locator('[data-slot="device-metro"]')
+    await expect(metro).toHaveCount(expo ? 1 : 0)
+    if (expo) {
+      const android = page.getByRole("toolbar", { name: labels.android, exact: true }).locator("xpath=..")
+      await expect(android.locator('[data-slot="device-metro"]')).toContainText("Metro~/DeviceControls")
+      await expect(android.getByTitle(directory, { exact: true })).toBeVisible()
+    }
+
     for (const platform of platforms) {
       const label = labels[platform]
       const pane = page.getByRole("toolbar", { name: label, exact: true })
@@ -138,6 +147,7 @@ for (const platforms of [["ios", "android"], ["ios"], ["android"]] as const) {
         ).toBeEnabled()
     }
     if (expo) await expect(controls.getByRole("button", { name: "Stop", exact: true })).toBeEnabled()
+    await expect(metro).toHaveCount(0)
     expect(calls).toEqual([
       ...(expo ? [{ path: "/api/device-preview/bundler/start", directory }] : []),
       ...platforms.map((platform) => ({ path: "/api/device-preview/run", directory, platform })),
