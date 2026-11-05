@@ -56,7 +56,7 @@ curl -fsSL https://raw.githubusercontent.com/hsandhu/mobilecode/main/install | b
 git clone https://github.com/hsandhu/mobilecode.git
 cd mobilecode
 bun install
-bun run --cwd packages/opencode src/index.ts
+bun run --cwd packages/cli src/index.ts
 ```
 
 The install script places the binary in `~/.mobilecode/bin` and adds it to your shell PATH.
@@ -69,12 +69,12 @@ MobileCode keeps opencode's configuration format and locations, so an existing `
 
 ```bash
 bun install
-bun run --cwd packages/opencode src/index.ts serve --port 4096   # backend
+bun run --cwd packages/cli src/index.ts serve --port 4096   # backend
 bun --cwd packages/app dev -- --port 4444                        # web UI at http://localhost:4444
 bun --cwd packages/desktop dev                                   # desktop app
 ```
 
-Run `bun typecheck` inside a package directory before sending changes. Tests run from package directories, for example `bun test` in `packages/opencode`.
+Run `bun typecheck` inside a package directory before sending changes. Tests run from package directories, for example `bun test` in `packages/core`.
 
 ### Building the macOS app
 
