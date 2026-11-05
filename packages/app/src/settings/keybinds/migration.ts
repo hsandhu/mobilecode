@@ -17,6 +17,7 @@ export const keybindRenames = {
   // The details plugin's earlier id, then the command before plugins.
   "summary.toggle": "details.toggle",
   "session.summary.toggle": "details.toggle",
+  "session.device.toggle": "device.toggle",
 } satisfies Readonly<Record<string, string>>
 
 /** Moves renamed overrides once settings load. An override already stored under the new id wins. */

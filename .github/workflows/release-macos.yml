@@ -114,6 +114,10 @@ jobs:
         working-directory: packages/core
         run: bun test test/device-build.test.ts test/device-preview.test.ts test/tool-device-run.test.ts
 
+      - name: Test device pane
+        working-directory: packages/gui-plugins
+        run: bun test src/device
+
       - name: Build CLI
         working-directory: packages/cli
         run: bun run build && rm -rf dist/.bun

@@ -50,10 +50,12 @@ async function sealUnsigned(context: {
 }) {
   if (context.electronPlatformName !== "darwin") return
   const app = path.join(context.appOutDir, `${context.packager.appInfo.productFilename}.app`)
+
   const sealed = await execFileAsync("codesign", ["--verify", "--deep", "--strict", app]).then(
     () => true,
     () => false,
   )
+
   if (sealed) return
   console.log(`  • ad-hoc signing ${path.basename(app)} (no Developer ID identity available)`)
   await execFileAsync("codesign", ["--force", "--deep", "--sign", "-", app])
