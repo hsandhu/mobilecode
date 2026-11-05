@@ -320,6 +320,22 @@ import type {
   ConfigShellsOutput,
   ExperimentalConfigUpdateInput,
   ExperimentalConfigUpdateOutput,
+  DevicePreviewGetInput,
+  DevicePreviewGetOutput,
+  DevicePreviewStartInput,
+  DevicePreviewStartOutput,
+  DevicePreviewStopInput,
+  DevicePreviewStopOutput,
+  DevicePreviewStartBundlerInput,
+  DevicePreviewStartBundlerOutput,
+  DevicePreviewStopBundlerInput,
+  DevicePreviewStopBundlerOutput,
+  DevicePreviewRunAppInput,
+  DevicePreviewRunAppOutput,
+  DevicePreviewFocusInput,
+  DevicePreviewFocusOutput,
+  DevicePreviewStopAppInput,
+  DevicePreviewStopAppOutput,
 } from "./types.js"
 import { ClientError } from "./client-error.js"
 
@@ -2681,6 +2697,108 @@ export function make(options: ClientOptions) {
           {
             method: "GET",
             path: `/api/config/shell`,
+            successStatus: 200,
+            declaredStatuses: [400, 401, 404],
+            empty: false,
+          },
+          requestOptions,
+        ),
+    },
+    devicePreview: {
+      get: (input?: DevicePreviewGetInput, requestOptions?: RequestOptions) =>
+        request<DevicePreviewGetOutput>(
+          {
+            method: "GET",
+            path: `/api/device-preview`,
+            query: { location: input?.["location"] },
+            successStatus: 200,
+            declaredStatuses: [400, 401, 404],
+            empty: false,
+          },
+          requestOptions,
+        ),
+      start: (input: DevicePreviewStartInput, requestOptions?: RequestOptions) =>
+        request<DevicePreviewStartOutput>(
+          {
+            method: "POST",
+            path: `/api/device-preview/start`,
+            query: { location: input["location"] },
+            body: { platform: input["platform"] },
+            successStatus: 200,
+            declaredStatuses: [400, 401, 404],
+            empty: false,
+          },
+          requestOptions,
+        ),
+      stop: (input: DevicePreviewStopInput, requestOptions?: RequestOptions) =>
+        request<DevicePreviewStopOutput>(
+          {
+            method: "POST",
+            path: `/api/device-preview/stop`,
+            query: { location: input["location"] },
+            body: { platform: input["platform"] },
+            successStatus: 200,
+            declaredStatuses: [400, 401, 404],
+            empty: false,
+          },
+          requestOptions,
+        ),
+      startBundler: (input?: DevicePreviewStartBundlerInput, requestOptions?: RequestOptions) =>
+        request<DevicePreviewStartBundlerOutput>(
+          {
+            method: "POST",
+            path: `/api/device-preview/bundler/start`,
+            query: { location: input?.["location"] },
+            successStatus: 200,
+            declaredStatuses: [400, 401, 404],
+            empty: false,
+          },
+          requestOptions,
+        ),
+      stopBundler: (input?: DevicePreviewStopBundlerInput, requestOptions?: RequestOptions) =>
+        request<DevicePreviewStopBundlerOutput>(
+          {
+            method: "POST",
+            path: `/api/device-preview/bundler/stop`,
+            query: { location: input?.["location"] },
+            successStatus: 200,
+            declaredStatuses: [400, 401, 404],
+            empty: false,
+          },
+          requestOptions,
+        ),
+      runApp: (input: DevicePreviewRunAppInput, requestOptions?: RequestOptions) =>
+        request<DevicePreviewRunAppOutput>(
+          {
+            method: "POST",
+            path: `/api/device-preview/run`,
+            query: { location: input["location"] },
+            body: { platform: input["platform"], relaunch: input["relaunch"] },
+            successStatus: 200,
+            declaredStatuses: [400, 401, 404],
+            empty: false,
+          },
+          requestOptions,
+        ),
+      focus: (input?: DevicePreviewFocusInput, requestOptions?: RequestOptions) =>
+        request<DevicePreviewFocusOutput>(
+          {
+            method: "POST",
+            path: `/api/device-preview/focus`,
+            query: { location: input?.["location"] },
+            successStatus: 200,
+            declaredStatuses: [400, 401, 404],
+            empty: false,
+          },
+          requestOptions,
+        ),
+      stopApp: (input: DevicePreviewStopAppInput, requestOptions?: RequestOptions) =>
+        request<DevicePreviewStopAppOutput>(
+          {
+            method: "POST",
+            path: `/api/device-preview/run/stop`,
+            query: { location: input["location"] },
+            body: { platform: input["platform"] },
             successStatus: 200,
             declaredStatuses: [400, 401, 404],
             empty: false,

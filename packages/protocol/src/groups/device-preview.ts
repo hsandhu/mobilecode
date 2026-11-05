@@ -1,7 +1,7 @@
-import { DevicePreview } from "@opencode-ai/schema/device-preview"
-import { Location } from "@opencode-ai/schema/location"
-import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/unstable/httpapi"
-import { LocationQuery, locationQueryOpenApi } from "./location"
+import { DevicePreview } from "@opencode/schema/device-preview"
+import { Location } from "@opencode/schema/location"
+import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/http-api"
+import { LocationQuery, locationQueryOpenApi } from "./location.js"
 
 export const DevicePreviewGroup = HttpApiGroup.make("server.devicePreview")
   .add(
@@ -12,7 +12,7 @@ export const DevicePreviewGroup = HttpApiGroup.make("server.devicePreview")
       .annotateMerge(locationQueryOpenApi)
       .annotateMerge(
         OpenApi.annotations({
-          identifier: "v2.devicePreview.get",
+          identifier: "devicePreview.get",
           summary: "Get device preview",
           description:
             "Detect iOS and Android projects at the requested location and report running simulator or emulator preview servers.",
@@ -28,7 +28,7 @@ export const DevicePreviewGroup = HttpApiGroup.make("server.devicePreview")
       .annotateMerge(locationQueryOpenApi)
       .annotateMerge(
         OpenApi.annotations({
-          identifier: "v2.devicePreview.start",
+          identifier: "devicePreview.start",
           summary: "Start device preview",
           description:
             "Start the virtual device and its preview stream, then build, install and launch the requested location's app for one platform. Equivalent to runApp; poll the get endpoint for progress.",
@@ -44,7 +44,7 @@ export const DevicePreviewGroup = HttpApiGroup.make("server.devicePreview")
       .annotateMerge(locationQueryOpenApi)
       .annotateMerge(
         OpenApi.annotations({
-          identifier: "v2.devicePreview.stop",
+          identifier: "devicePreview.stop",
           summary: "Stop device preview",
           description:
             "Cancel the location's build, terminate its app, stop its preview stream and shut down its virtual device for one platform. Equivalent to stopApp.",
@@ -59,7 +59,7 @@ export const DevicePreviewGroup = HttpApiGroup.make("server.devicePreview")
       .annotateMerge(locationQueryOpenApi)
       .annotateMerge(
         OpenApi.annotations({
-          identifier: "v2.devicePreview.startBundler",
+          identifier: "devicePreview.startBundler",
           summary: "Start Metro",
           description: "Start the Metro bundler for the React Native or Expo project at the requested location.",
         }),
@@ -73,7 +73,7 @@ export const DevicePreviewGroup = HttpApiGroup.make("server.devicePreview")
       .annotateMerge(locationQueryOpenApi)
       .annotateMerge(
         OpenApi.annotations({
-          identifier: "v2.devicePreview.stopBundler",
+          identifier: "devicePreview.stopBundler",
           summary: "Stop Metro",
           description: "Stop the Metro bundler for the React Native or Expo project at the requested location.",
         }),
@@ -88,7 +88,7 @@ export const DevicePreviewGroup = HttpApiGroup.make("server.devicePreview")
       .annotateMerge(locationQueryOpenApi)
       .annotateMerge(
         OpenApi.annotations({
-          identifier: "v2.devicePreview.runApp",
+          identifier: "devicePreview.runApp",
           summary: "Build and run the app",
           description:
             "Start and stream one virtual device, build the location's native project, install it and launch it on that same device. Expo apps are prebuilt first, and React Native apps get Metro started when needed. Only an existing run on the same platform is replaced; the other platform is untouched. Returns immediately; poll the get endpoint for progress.",
@@ -103,7 +103,7 @@ export const DevicePreviewGroup = HttpApiGroup.make("server.devicePreview")
       .annotateMerge(locationQueryOpenApi)
       .annotateMerge(
         OpenApi.annotations({
-          identifier: "v2.devicePreview.focus",
+          identifier: "devicePreview.focus",
           summary: "Read the focused location's device status",
           description:
             "Compatibility endpoint that returns device status without starting, stopping or transferring devices. Switching locations never starts a build.",
@@ -119,7 +119,7 @@ export const DevicePreviewGroup = HttpApiGroup.make("server.devicePreview")
       .annotateMerge(locationQueryOpenApi)
       .annotateMerge(
         OpenApi.annotations({
-          identifier: "v2.devicePreview.stopApp",
+          identifier: "devicePreview.stopApp",
           summary: "Stop the running app",
           description:
             "Cancel the location's in-flight build, terminate its app, stop its preview stream and shut down its virtual device for the selected platform. Other locations and platforms are untouched. Manually started Metro remains running.",

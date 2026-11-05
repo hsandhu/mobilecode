@@ -382,6 +382,42 @@ export type ConfigModelReasoning =
 
 export type ConfigShellOption = { path: string; name: string; acceptable: boolean }
 
+export type DevicePreviewBundler = {
+  framework: "expo" | "react-native" | "native"
+  directory: string
+  status: "starting" | "running" | "exited"
+  command: string
+  url?: string
+  pid?: number
+  exitCode?: number
+  log: Array<string>
+}
+
+export type DevicePreviewServer = {
+  platform: "ios" | "android"
+  status: "starting" | "running" | "exited"
+  command: string
+  url?: string
+  pid?: number
+  exitCode?: number
+  log: Array<string>
+}
+
+export type DevicePreviewBuild = {
+  platform: "ios" | "android"
+  framework?: "expo" | "react-native" | "native"
+  status: "idle" | "building" | "installing" | "launching" | "running" | "failed"
+  directory?: string
+  target?: string
+  appID?: string
+  device?: string
+  step?: string
+  error?: string
+  log: Array<string>
+  startedAt?: number
+  finishedAt?: number
+}
+
 export type LocationPublicRef = { directory: AbsolutePath }
 
 export type FileSystemWrite = { path: AbsolutePath }
@@ -987,6 +1023,14 @@ export type ConfigModelCapabilities = {
   output?: Array<string>
   temperature?: boolean
   reasoning?: ConfigModelReasoning
+}
+
+export type DevicePreviewInfo = {
+  platforms: Array<"ios" | "android">
+  framework?: "expo" | "react-native" | "native"
+  bundler?: DevicePreviewBundler
+  servers: Array<DevicePreviewServer>
+  builds: Array<DevicePreviewBuild>
 }
 
 export type SessionMessageLocationSwitched = {
@@ -4855,6 +4899,55 @@ export type ConfigShellsOutput = Array<ConfigShellOption>
 export type ExperimentalConfigUpdateInput = { readonly shell: string | null }
 
 export type ExperimentalConfigUpdateOutput = void
+
+export type DevicePreviewGetInput = { readonly location?: { readonly directory?: string | undefined } | undefined }
+
+export type DevicePreviewGetOutput = { location: LocationPublicRef; data: DevicePreviewInfo }
+
+export type DevicePreviewStartInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly platform: "ios" | "android"
+}
+
+export type DevicePreviewStartOutput = { location: LocationPublicRef; data: DevicePreviewInfo }
+
+export type DevicePreviewStopInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly platform: "ios" | "android"
+}
+
+export type DevicePreviewStopOutput = { location: LocationPublicRef; data: DevicePreviewInfo }
+
+export type DevicePreviewStartBundlerInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+}
+
+export type DevicePreviewStartBundlerOutput = { location: LocationPublicRef; data: DevicePreviewInfo }
+
+export type DevicePreviewStopBundlerInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+}
+
+export type DevicePreviewStopBundlerOutput = { location: LocationPublicRef; data: DevicePreviewInfo }
+
+export type DevicePreviewRunAppInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly platform: "ios" | "android"
+  readonly relaunch?: boolean | undefined
+}
+
+export type DevicePreviewRunAppOutput = { location: LocationPublicRef; data: DevicePreviewInfo }
+
+export type DevicePreviewFocusInput = { readonly location?: { readonly directory?: string | undefined } | undefined }
+
+export type DevicePreviewFocusOutput = { location: LocationPublicRef; data: DevicePreviewInfo }
+
+export type DevicePreviewStopAppInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly platform: "ios" | "android"
+}
+
+export type DevicePreviewStopAppOutput = { location: LocationPublicRef; data: DevicePreviewInfo }
 
 /** @deprecated Use `ExperimentalSessionStatsInput`. Removed in the next minor. */
 export type SessionStatsInput = ExperimentalSessionStatsInput

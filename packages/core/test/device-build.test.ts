@@ -1,6 +1,6 @@
 import path from "path"
 import { describe, expect, spyOn, test } from "bun:test"
-import { DeviceBuild } from "@opencode-ai/core/device-build"
+import { DeviceBuild } from "@opencode/core/device-build"
 import { tmpdir } from "./fixture/tmpdir"
 
 const darwin = process.platform === "darwin"

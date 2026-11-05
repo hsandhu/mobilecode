@@ -318,6 +318,22 @@ import type {
   ConfigShellsOutput,
   ExperimentalConfigUpdateInput,
   ExperimentalConfigUpdateOutput,
+  DevicePreviewGetInput,
+  DevicePreviewGetOutput,
+  DevicePreviewStartInput,
+  DevicePreviewStartOutput,
+  DevicePreviewStopInput,
+  DevicePreviewStopOutput,
+  DevicePreviewStartBundlerInput,
+  DevicePreviewStartBundlerOutput,
+  DevicePreviewStopBundlerInput,
+  DevicePreviewStopBundlerOutput,
+  DevicePreviewRunAppInput,
+  DevicePreviewRunAppOutput,
+  DevicePreviewFocusInput,
+  DevicePreviewFocusOutput,
+  DevicePreviewStopAppInput,
+  DevicePreviewStopAppOutput,
 } from "../api/api.js"
 import { ClientError } from "./client-error.js"
 
@@ -1961,6 +1977,75 @@ const adaptGroupExperimentalConfig = (raw: RawClient["server.config"]) => ({
   update: EndpointExperimentalConfigUpdate(raw),
 })
 
+const EndpointDevicePreviewGet = (raw: RawClient["server.devicePreview"]) => (input?: DevicePreviewGetInput) =>
+  preserveEffect<DevicePreviewGetOutput>()(
+    raw["devicePreview.get"]({ query: { location: input?.["location"] } }).pipe(Effect.mapError(mapClientError)),
+  )
+
+const EndpointDevicePreviewStart = (raw: RawClient["server.devicePreview"]) => (input: DevicePreviewStartInput) =>
+  preserveEffect<DevicePreviewStartOutput>()(
+    raw["devicePreview.start"]({
+      query: { location: input["location"] },
+      payload: { platform: input["platform"] },
+    }).pipe(Effect.mapError(mapClientError)),
+  )
+
+const EndpointDevicePreviewStop = (raw: RawClient["server.devicePreview"]) => (input: DevicePreviewStopInput) =>
+  preserveEffect<DevicePreviewStopOutput>()(
+    raw["devicePreview.stop"]({
+      query: { location: input["location"] },
+      payload: { platform: input["platform"] },
+    }).pipe(Effect.mapError(mapClientError)),
+  )
+
+const EndpointDevicePreviewStartBundler =
+  (raw: RawClient["server.devicePreview"]) => (input?: DevicePreviewStartBundlerInput) =>
+    preserveEffect<DevicePreviewStartBundlerOutput>()(
+      raw["devicePreview.startBundler"]({ query: { location: input?.["location"] } }).pipe(
+        Effect.mapError(mapClientError),
+      ),
+    )
+
+const EndpointDevicePreviewStopBundler =
+  (raw: RawClient["server.devicePreview"]) => (input?: DevicePreviewStopBundlerInput) =>
+    preserveEffect<DevicePreviewStopBundlerOutput>()(
+      raw["devicePreview.stopBundler"]({ query: { location: input?.["location"] } }).pipe(
+        Effect.mapError(mapClientError),
+      ),
+    )
+
+const EndpointDevicePreviewRunApp = (raw: RawClient["server.devicePreview"]) => (input: DevicePreviewRunAppInput) =>
+  preserveEffect<DevicePreviewRunAppOutput>()(
+    raw["devicePreview.runApp"]({
+      query: { location: input["location"] },
+      payload: { platform: input["platform"], relaunch: input["relaunch"] },
+    }).pipe(Effect.mapError(mapClientError)),
+  )
+
+const EndpointDevicePreviewFocus = (raw: RawClient["server.devicePreview"]) => (input?: DevicePreviewFocusInput) =>
+  preserveEffect<DevicePreviewFocusOutput>()(
+    raw["devicePreview.focus"]({ query: { location: input?.["location"] } }).pipe(Effect.mapError(mapClientError)),
+  )
+
+const EndpointDevicePreviewStopApp = (raw: RawClient["server.devicePreview"]) => (input: DevicePreviewStopAppInput) =>
+  preserveEffect<DevicePreviewStopAppOutput>()(
+    raw["devicePreview.stopApp"]({
+      query: { location: input["location"] },
+      payload: { platform: input["platform"] },
+    }).pipe(Effect.mapError(mapClientError)),
+  )
+
+const adaptGroupDevicePreview = (raw: RawClient["server.devicePreview"]) => ({
+  get: EndpointDevicePreviewGet(raw),
+  start: EndpointDevicePreviewStart(raw),
+  stop: EndpointDevicePreviewStop(raw),
+  startBundler: EndpointDevicePreviewStartBundler(raw),
+  stopBundler: EndpointDevicePreviewStopBundler(raw),
+  runApp: EndpointDevicePreviewRunApp(raw),
+  focus: EndpointDevicePreviewFocus(raw),
+  stopApp: EndpointDevicePreviewStopApp(raw),
+})
+
 const adaptClient = (raw: RawClient) => {
   const client = {
     server: adaptGroupServer(raw["server.server"]),
@@ -2002,6 +2087,7 @@ const adaptClient = (raw: RawClient) => {
     debug: adaptGroupDebug(raw["server.debug"]),
     websearch: adaptGroupWebsearch(raw["server.websearch"]),
     config: adaptGroupConfig(raw["server.config"]),
+    devicePreview: adaptGroupDevicePreview(raw["server.devicePreview"]),
   }
   return {
     ...client,

@@ -1,15 +1,14 @@
-export * as DevicePreview from "./device-preview"
+export * as DevicePreview from "./device-preview.js"
 
-import { DevicePreview } from "@opencode-ai/schema/device-preview"
+import { DevicePreview } from "@opencode/schema/device-preview"
 import { Context, Effect, Layer } from "effect"
 import type { ChildProcess } from "child_process"
 import type { Readable } from "stream"
 import launch from "cross-spawn"
 import os from "os"
 import path from "path"
-import { DeviceBuild } from "./device-build"
-import { makeGlobalNode } from "./effect/app-node"
-import { Shell } from "./shell"
+import { DeviceBuild } from "./device-build.js"
+import { makeGlobalNode } from "@opencode/util/effect/app-node"
 
 export const Platform = DevicePreview.Platform
 export type Platform = DevicePreview.Platform
@@ -1050,7 +1049,14 @@ async function kill(active: { process?: ChildProcess; state: { status: DevicePre
   const proc = active.process
   if (!proc || active.state.status === "exited") return
   const exited = () => active.state.status === "exited"
-  if (process.platform === "win32") return Shell.killTree(proc, { exited })
+  if (process.platform === "win32") {
+    await new Promise<void>((resolve) => {
+      const killer = launch("taskkill", ["/pid", String(proc.pid), "/f", "/t"], { stdio: "ignore", windowsHide: true })
+      killer.once("exit", () => resolve())
+      killer.once("error", () => resolve())
+    })
+    return
+  }
   // npm forwards SIGTERM to the serve-* process it launched, which shuts the stream down cleanly.
   // Capture the tree first so stragglers (simctl, adb) can still be force-killed afterwards.
   const tree = [...descendants(proc.pid), ...(proc.pid ? [proc.pid] : [])]

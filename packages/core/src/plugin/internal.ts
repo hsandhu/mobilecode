@@ -91,6 +91,8 @@ import { ShellTool } from "../tool/plugin/shell.js"
 import { SkillTool } from "../tool/plugin/skill.js"
 import { SubagentTool } from "../tool/plugin/subagent.js"
 import { TodoTool } from "../tool/plugin/todo.js"
+import { DeviceRunTool } from "../tool/plugin/device-run.js"
+import { DevicePreview } from "../device-preview.js"
 import { Tool } from "../tool.js"
 import { ToolOutput } from "../tool-output.js"
 import { WebFetchTool } from "../tool/plugin/webfetch.js"
@@ -131,6 +133,7 @@ const services = [
   Command.Service,
   Config.Service,
   Credential.Service,
+  DevicePreview.Service,
   Bus.Service,
   Environment.Service,
   FileAccess.Service,
@@ -191,6 +194,7 @@ export const requirements = LayerNode.group([
   Command.node,
   Config.node,
   Credential.node,
+  DevicePreview.node,
   Bus.node,
   Environment.node,
   FileAccess.node,
@@ -276,6 +280,7 @@ const pre = [
   SkillTool.Plugin,
   SubagentTool.Plugin,
   TodoTool.Plugin,
+  DeviceRunTool.Plugin,
   WebFetchTool.Plugin,
   WebSearchTool.Plugin,
   WriteTool.Plugin,

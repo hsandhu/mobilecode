@@ -66,6 +66,7 @@ export const groupNames = {
   "server.worktree": "worktree",
   "server.vcs": "vcs",
   "server.config": "config",
+  "server.devicePreview": "devicePreview",
 } as const
 
 // Experimental routes carry no compatibility promise, so the generated clients nest them under

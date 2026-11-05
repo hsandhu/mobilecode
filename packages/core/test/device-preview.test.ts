@@ -2,9 +2,9 @@ import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from "bun:
 import { ChildProcess } from "child_process"
 import path from "path"
 import { Effect } from "effect"
-import { DeviceBuild } from "@opencode-ai/core/device-build"
-import { DevicePreview } from "@opencode-ai/core/device-preview"
-import { AppNodeBuilder } from "@opencode-ai/core/effect/app-node-builder"
+import { DeviceBuild } from "@opencode/core/device-build"
+import { DevicePreview } from "@opencode/core/device-preview"
+import { AppNodeBuilder } from "@opencode/core/effect/app-node-builder"
 import { tmpdir } from "./fixture/tmpdir"
 
 // Exercise the real lifecycle service and project detection; replace only host-tool boundaries

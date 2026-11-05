@@ -33,10 +33,21 @@ test("exposes every standard HTTP API group", () => {
     "debug",
     "websearch",
     "config",
+    "devicePreview",
     "generate",
     "voice",
     "migration",
     "usage",
+  ])
+  expect(Object.keys(client.devicePreview)).toEqual([
+    "get",
+    "start",
+    "stop",
+    "startBundler",
+    "stopBundler",
+    "runApp",
+    "focus",
+    "stopApp",
   ])
   expect(Object.keys(client.debug)).toEqual(["heapDump", "location"])
   expect(Object.keys(client.debug.location)).toEqual(["list", "evict"])

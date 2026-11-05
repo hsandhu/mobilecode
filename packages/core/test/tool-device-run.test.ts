@@ -1,42 +1,39 @@
 import { describe, expect } from "bun:test"
 import { Effect, Layer } from "effect"
-import { DevicePreview } from "@opencode-ai/core/device-preview"
-import { AppNodeBuilder } from "@opencode-ai/core/effect/app-node-builder"
-import { LayerNode } from "@opencode-ai/core/effect/layer-node"
-import { Location } from "@opencode-ai/core/location"
-import { PermissionV2 } from "@opencode-ai/core/permission"
-import { AbsolutePath } from "@opencode-ai/core/schema"
-import { SessionV2 } from "@opencode-ai/core/session"
-import { DeviceRunTool } from "@opencode-ai/core/tool/device-run"
-import { ToolRegistry } from "@opencode-ai/core/tool/registry"
-import { ToolOutputStore } from "@opencode-ai/core/tool-output-store"
+import { DevicePreview } from "@opencode/core/device-preview"
+import { AppNodeBuilder } from "@opencode/core/effect/app-node-builder"
+import { Location } from "@opencode/core/location"
+import { Permission } from "@opencode/core/permission"
+import { AbsolutePath } from "@opencode/core/schema"
+import { Session } from "@opencode/core/session"
+import { Tool } from "@opencode/core/tool"
+import { DeviceRunTool } from "@opencode/core/tool/plugin/device-run"
+import { makeLocationNode } from "@opencode/util/effect/app-node"
+import { LayerNode } from "@opencode/util/effect/layer-node"
 import { location } from "./fixture/location"
 import { testEffect } from "./lib/effect"
-import { toolIdentity, executeTool, settleTool, toolDefinitions } from "./lib/tool"
+import { permissionLayer } from "./lib/permission"
+import { toolIdentity, executeTool, registerToolPlugin, toolDefinitions } from "./lib/tool"
 
-const sessionID = SessionV2.ID.make("ses_device_run_tool_test")
+const sessionID = Session.ID.make("ses_device_run_tool_test")
 const directory = "/project"
-const assertions: PermissionV2.AssertInput[] = []
+const assertions: Permission.AssertInput[] = []
 const calls: string[] = []
 let deny = false
 let info: DevicePreview.Info = { platforms: [], servers: [], builds: [] }
 // What `info` reports after a run has been started, in order.
 let queue: DevicePreview.Info[] = []
 
-const permission = Layer.succeed(
-  PermissionV2.Service,
-  PermissionV2.Service.of({
-    assert: (input) =>
-      Effect.sync(() => assertions.push(input)).pipe(
-        Effect.andThen(deny ? Effect.fail(new PermissionV2.BlockedError({ rules: [] })) : Effect.void),
+const permission = permissionLayer({
+  assert: (input) =>
+    Effect.sync(() => assertions.push(input)).pipe(
+      Effect.andThen(
+        deny
+          ? Effect.fail(new Permission.BlockedError({ rules: [], permission: input.action, resources: input.resources }))
+          : Effect.void,
       ),
-    ask: () => Effect.die("unused"),
-    reply: () => Effect.die("unused"),
-    get: () => Effect.die("unused"),
-    forSession: () => Effect.die("unused"),
-    list: () => Effect.die("unused"),
-  }),
-)
+    ),
+})
 
 const advance = () => {
   const next = queue.shift()
@@ -64,12 +61,17 @@ const active = Layer.succeed(
   Location.Service.of(location({ directory: AbsolutePath.make(directory) })),
 )
 
+const deviceRunNode = makeLocationNode({
+  name: "test/device-run-tool-plugin",
+  layer: Layer.effectDiscard(registerToolPlugin(DeviceRunTool.Plugin)),
+  deps: [Tool.node, Permission.node, Location.node, DevicePreview.node],
+})
+
 const it = testEffect(
-  AppNodeBuilder.build(LayerNode.group([ToolRegistry.node, ToolRegistry.toolsNode, DeviceRunTool.node]), [
-    [Location.node, active],
-    [PermissionV2.node, permission],
-    [DevicePreview.node, preview],
-    [ToolOutputStore.node, ToolOutputStore.nodeWithoutConfig],
+  AppNodeBuilder.build(LayerNode.group([Tool.node, deviceRunNode]), [
+    Location.node.replace(active),
+    Permission.node.replace(permission),
+    DevicePreview.node.replace(preview),
   ]),
 )
 
@@ -102,16 +104,13 @@ describe("DeviceRunTool", () => {
         servers: [],
         builds: [build("ios", "running", { appID: "com.acme.app", target: "App" })],
       })
-      const registry = yield* ToolRegistry.Service
+      const registry = yield* Tool.Service
 
-      expect((yield* toolDefinitions(registry)).map((tool) => tool.name)).toEqual([DeviceRunTool.name])
-      const settled = yield* settleTool(registry, call({ action: "status" }))
+      expect((yield* toolDefinitions(registry)).map((tool) => tool.name)).toContain(DeviceRunTool.name)
+      const settled = yield* executeTool(registry, call({ action: "status" }))
 
-      expect(settled.result).toEqual({
-        type: "text",
-        value: "Framework: expo\niOS: running — com.acme.app, target App",
-      })
-      expect(settled.output?.structured).toEqual({
+      expect(settled.content).toEqual([{ type: "text", text: "Framework: expo\niOS: running — com.acme.app, target App" }])
+      expect(settled.output).toEqual({
         framework: "expo",
         platforms: ["ios", "android"],
         builds: [{ platform: "ios", status: "running", target: "App", appID: "com.acme.app", log: [] }],
@@ -148,23 +147,25 @@ describe("DeviceRunTool", () => {
           },
         },
       )
-      const registry = yield* ToolRegistry.Service
+      const registry = yield* Tool.Service
 
       const result = yield* executeTool(registry, call({ action: "run", timeout: 10_000 }))
 
       expect(calls).toEqual(["run ios", "run android"])
-      expect(result).toEqual({
-        type: "text",
-        value: [
+      expect(result.content).toEqual([
+        {
+          type: "text",
+          text: [
           "Framework: react-native",
           "iOS: running — com.acme.app",
           "Android: failed",
           "  Could not resolve com.example:missing:1.0",
           "  | > Task :app:compileDebugKotlin",
           "  | FAILURE: Build failed with an exception.",
-          "Metro: running at http://localhost:8081",
-        ].join("\n"),
-      })
+            "Metro: running at http://localhost:8081",
+          ].join("\n"),
+        },
+      ])
     }),
   )
 
@@ -176,14 +177,13 @@ describe("DeviceRunTool", () => {
         { ...detected, builds: [] },
         { ...detected, builds: [build("android", "building", { step: "Building app" })] },
       )
-      const registry = yield* ToolRegistry.Service
+      const registry = yield* Tool.Service
 
-      const settled = yield* settleTool(registry, call({ action: "run", platform: "android", timeout: 1 }))
+      const settled = yield* executeTool(registry, call({ action: "run", platform: "android", timeout: 1 }))
 
       expect(calls).toEqual(["run android"])
-      expect(settled.output?.structured).toMatchObject({ complete: false, builds: [{ status: "building" }] })
-      expect(settled.result.type).toBe("text")
-      expect(String(settled.result.value)).toContain("Timed out waiting")
+      expect(settled.output).toMatchObject({ complete: false, builds: [{ status: "building" }] })
+      expect(settled.content).toEqual([{ type: "text", text: expect.stringContaining("Timed out waiting") }])
     }),
   )
 
@@ -194,23 +194,23 @@ describe("DeviceRunTool", () => {
         { ...detected, builds: [build("ios", "running"), build("android", "running")] },
         { ...detected, builds: [build("ios", "idle"), build("android", "running")] },
       )
-      const registry = yield* ToolRegistry.Service
+      const registry = yield* Tool.Service
 
-      const settled = yield* settleTool(registry, call({ action: "stop", platform: "ios" }))
+      const settled = yield* executeTool(registry, call({ action: "stop", platform: "ios" }))
 
       expect(calls).toEqual(["stop ios"])
-      expect(settled.output?.structured).toMatchObject({ builds: [{ platform: "ios", status: "idle" }] })
+      expect(settled.output).toMatchObject({ builds: [{ platform: "ios", status: "idle" }] })
     }),
   )
 
   it.effect("fails clearly when the platform is not part of the project", () =>
     Effect.gen(function* () {
       reset({ platforms: ["android"], servers: [], builds: [] })
-      const registry = yield* ToolRegistry.Service
+      const registry = yield* Tool.Service
 
-      expect(yield* executeTool(registry, call({ action: "run", platform: "ios" }))).toEqual({
-        type: "error",
-        value: "No iOS project was found. Detected: Android.",
+      expect(yield* executeTool(registry, call({ action: "run", platform: "ios" }))).toMatchObject({
+        status: "error",
+        error: { message: "No iOS project was found. Detected: Android." },
       })
       expect(calls).toEqual([])
     }),
@@ -219,11 +219,11 @@ describe("DeviceRunTool", () => {
   it.effect("fails when nothing mobile is detected", () =>
     Effect.gen(function* () {
       reset({ platforms: [], servers: [], builds: [] })
-      const registry = yield* ToolRegistry.Service
+      const registry = yield* Tool.Service
 
-      expect(yield* executeTool(registry, call({ action: "run" }))).toEqual({
-        type: "error",
-        value: "No iOS or Android project was found at or below this directory.",
+      expect(yield* executeTool(registry, call({ action: "run" }))).toMatchObject({
+        status: "error",
+        error: { message: "No iOS or Android project was found at or below this directory." },
       })
     }),
   )
@@ -232,11 +232,11 @@ describe("DeviceRunTool", () => {
     Effect.gen(function* () {
       reset({ platforms: ["ios"], servers: [], builds: [] })
       deny = true
-      const registry = yield* ToolRegistry.Service
+      const registry = yield* Tool.Service
 
-      expect(yield* executeTool(registry, call({ action: "run" }))).toEqual({
-        type: "error",
-        value: "Running the app was not permitted.",
+      expect(yield* executeTool(registry, call({ action: "run" }))).toMatchObject({
+        status: "error",
+        error: { type: "permission.rejected", message: "Permission denied: device_run" },
       })
       expect(calls).toEqual([])
     }),

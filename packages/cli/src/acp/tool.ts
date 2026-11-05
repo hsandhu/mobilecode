@@ -16,6 +16,7 @@ export type DiffSource = {
 function toToolKind(toolName: string): ToolKind {
   switch (canonicalName(toolName)) {
     case "shell":
+    case "device_run":
       return "execute"
     case "webfetch":
       return "fetch"

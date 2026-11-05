@@ -2795,6 +2795,410 @@ export interface ExperimentalConfigApi<E = never> {
   readonly update: ExperimentalConfigUpdateOperation<E>
 }
 
+export type DevicePreviewGetInput = { readonly location?: { readonly directory?: string | undefined } | undefined }
+export type DevicePreviewGetOutput = {
+  readonly location: Location.PublicRef
+  readonly data: {
+    readonly platforms: ReadonlyArray<"ios" | "android">
+    readonly framework?: "expo" | "react-native" | "native" | undefined
+    readonly bundler?:
+      | {
+          readonly framework: "expo" | "react-native" | "native"
+          readonly directory: string
+          readonly status: "starting" | "running" | "exited"
+          readonly command: string
+          readonly url?: string | undefined
+          readonly pid?: number | undefined
+          readonly exitCode?: number | undefined
+          readonly log: ReadonlyArray<string>
+        }
+      | undefined
+    readonly servers: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly status: "starting" | "running" | "exited"
+      readonly command: string
+      readonly url?: string | undefined
+      readonly pid?: number | undefined
+      readonly exitCode?: number | undefined
+      readonly log: ReadonlyArray<string>
+    }>
+    readonly builds: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly framework?: "expo" | "react-native" | "native" | undefined
+      readonly status: "idle" | "building" | "installing" | "launching" | "running" | "failed"
+      readonly directory?: string | undefined
+      readonly target?: string | undefined
+      readonly appID?: string | undefined
+      readonly device?: string | undefined
+      readonly step?: string | undefined
+      readonly error?: string | undefined
+      readonly log: ReadonlyArray<string>
+      readonly startedAt?: number | undefined
+      readonly finishedAt?: number | undefined
+    }>
+  }
+}
+export type DevicePreviewGetOperation<E = never> = (
+  input?: DevicePreviewGetInput,
+) => Effect.Effect<DevicePreviewGetOutput, E>
+
+export type DevicePreviewStartInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly platform: "ios" | "android"
+}
+export type DevicePreviewStartOutput = {
+  readonly location: Location.PublicRef
+  readonly data: {
+    readonly platforms: ReadonlyArray<"ios" | "android">
+    readonly framework?: "expo" | "react-native" | "native" | undefined
+    readonly bundler?:
+      | {
+          readonly framework: "expo" | "react-native" | "native"
+          readonly directory: string
+          readonly status: "starting" | "running" | "exited"
+          readonly command: string
+          readonly url?: string | undefined
+          readonly pid?: number | undefined
+          readonly exitCode?: number | undefined
+          readonly log: ReadonlyArray<string>
+        }
+      | undefined
+    readonly servers: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly status: "starting" | "running" | "exited"
+      readonly command: string
+      readonly url?: string | undefined
+      readonly pid?: number | undefined
+      readonly exitCode?: number | undefined
+      readonly log: ReadonlyArray<string>
+    }>
+    readonly builds: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly framework?: "expo" | "react-native" | "native" | undefined
+      readonly status: "idle" | "building" | "installing" | "launching" | "running" | "failed"
+      readonly directory?: string | undefined
+      readonly target?: string | undefined
+      readonly appID?: string | undefined
+      readonly device?: string | undefined
+      readonly step?: string | undefined
+      readonly error?: string | undefined
+      readonly log: ReadonlyArray<string>
+      readonly startedAt?: number | undefined
+      readonly finishedAt?: number | undefined
+    }>
+  }
+}
+export type DevicePreviewStartOperation<E = never> = (
+  input: DevicePreviewStartInput,
+) => Effect.Effect<DevicePreviewStartOutput, E>
+
+export type DevicePreviewStopInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly platform: "ios" | "android"
+}
+export type DevicePreviewStopOutput = {
+  readonly location: Location.PublicRef
+  readonly data: {
+    readonly platforms: ReadonlyArray<"ios" | "android">
+    readonly framework?: "expo" | "react-native" | "native" | undefined
+    readonly bundler?:
+      | {
+          readonly framework: "expo" | "react-native" | "native"
+          readonly directory: string
+          readonly status: "starting" | "running" | "exited"
+          readonly command: string
+          readonly url?: string | undefined
+          readonly pid?: number | undefined
+          readonly exitCode?: number | undefined
+          readonly log: ReadonlyArray<string>
+        }
+      | undefined
+    readonly servers: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly status: "starting" | "running" | "exited"
+      readonly command: string
+      readonly url?: string | undefined
+      readonly pid?: number | undefined
+      readonly exitCode?: number | undefined
+      readonly log: ReadonlyArray<string>
+    }>
+    readonly builds: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly framework?: "expo" | "react-native" | "native" | undefined
+      readonly status: "idle" | "building" | "installing" | "launching" | "running" | "failed"
+      readonly directory?: string | undefined
+      readonly target?: string | undefined
+      readonly appID?: string | undefined
+      readonly device?: string | undefined
+      readonly step?: string | undefined
+      readonly error?: string | undefined
+      readonly log: ReadonlyArray<string>
+      readonly startedAt?: number | undefined
+      readonly finishedAt?: number | undefined
+    }>
+  }
+}
+export type DevicePreviewStopOperation<E = never> = (
+  input: DevicePreviewStopInput,
+) => Effect.Effect<DevicePreviewStopOutput, E>
+
+export type DevicePreviewStartBundlerInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+}
+export type DevicePreviewStartBundlerOutput = {
+  readonly location: Location.PublicRef
+  readonly data: {
+    readonly platforms: ReadonlyArray<"ios" | "android">
+    readonly framework?: "expo" | "react-native" | "native" | undefined
+    readonly bundler?:
+      | {
+          readonly framework: "expo" | "react-native" | "native"
+          readonly directory: string
+          readonly status: "starting" | "running" | "exited"
+          readonly command: string
+          readonly url?: string | undefined
+          readonly pid?: number | undefined
+          readonly exitCode?: number | undefined
+          readonly log: ReadonlyArray<string>
+        }
+      | undefined
+    readonly servers: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly status: "starting" | "running" | "exited"
+      readonly command: string
+      readonly url?: string | undefined
+      readonly pid?: number | undefined
+      readonly exitCode?: number | undefined
+      readonly log: ReadonlyArray<string>
+    }>
+    readonly builds: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly framework?: "expo" | "react-native" | "native" | undefined
+      readonly status: "idle" | "building" | "installing" | "launching" | "running" | "failed"
+      readonly directory?: string | undefined
+      readonly target?: string | undefined
+      readonly appID?: string | undefined
+      readonly device?: string | undefined
+      readonly step?: string | undefined
+      readonly error?: string | undefined
+      readonly log: ReadonlyArray<string>
+      readonly startedAt?: number | undefined
+      readonly finishedAt?: number | undefined
+    }>
+  }
+}
+export type DevicePreviewStartBundlerOperation<E = never> = (
+  input?: DevicePreviewStartBundlerInput,
+) => Effect.Effect<DevicePreviewStartBundlerOutput, E>
+
+export type DevicePreviewStopBundlerInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+}
+export type DevicePreviewStopBundlerOutput = {
+  readonly location: Location.PublicRef
+  readonly data: {
+    readonly platforms: ReadonlyArray<"ios" | "android">
+    readonly framework?: "expo" | "react-native" | "native" | undefined
+    readonly bundler?:
+      | {
+          readonly framework: "expo" | "react-native" | "native"
+          readonly directory: string
+          readonly status: "starting" | "running" | "exited"
+          readonly command: string
+          readonly url?: string | undefined
+          readonly pid?: number | undefined
+          readonly exitCode?: number | undefined
+          readonly log: ReadonlyArray<string>
+        }
+      | undefined
+    readonly servers: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly status: "starting" | "running" | "exited"
+      readonly command: string
+      readonly url?: string | undefined
+      readonly pid?: number | undefined
+      readonly exitCode?: number | undefined
+      readonly log: ReadonlyArray<string>
+    }>
+    readonly builds: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly framework?: "expo" | "react-native" | "native" | undefined
+      readonly status: "idle" | "building" | "installing" | "launching" | "running" | "failed"
+      readonly directory?: string | undefined
+      readonly target?: string | undefined
+      readonly appID?: string | undefined
+      readonly device?: string | undefined
+      readonly step?: string | undefined
+      readonly error?: string | undefined
+      readonly log: ReadonlyArray<string>
+      readonly startedAt?: number | undefined
+      readonly finishedAt?: number | undefined
+    }>
+  }
+}
+export type DevicePreviewStopBundlerOperation<E = never> = (
+  input?: DevicePreviewStopBundlerInput,
+) => Effect.Effect<DevicePreviewStopBundlerOutput, E>
+
+export type DevicePreviewRunAppInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly platform: "ios" | "android"
+  readonly relaunch?: boolean | undefined
+}
+export type DevicePreviewRunAppOutput = {
+  readonly location: Location.PublicRef
+  readonly data: {
+    readonly platforms: ReadonlyArray<"ios" | "android">
+    readonly framework?: "expo" | "react-native" | "native" | undefined
+    readonly bundler?:
+      | {
+          readonly framework: "expo" | "react-native" | "native"
+          readonly directory: string
+          readonly status: "starting" | "running" | "exited"
+          readonly command: string
+          readonly url?: string | undefined
+          readonly pid?: number | undefined
+          readonly exitCode?: number | undefined
+          readonly log: ReadonlyArray<string>
+        }
+      | undefined
+    readonly servers: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly status: "starting" | "running" | "exited"
+      readonly command: string
+      readonly url?: string | undefined
+      readonly pid?: number | undefined
+      readonly exitCode?: number | undefined
+      readonly log: ReadonlyArray<string>
+    }>
+    readonly builds: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly framework?: "expo" | "react-native" | "native" | undefined
+      readonly status: "idle" | "building" | "installing" | "launching" | "running" | "failed"
+      readonly directory?: string | undefined
+      readonly target?: string | undefined
+      readonly appID?: string | undefined
+      readonly device?: string | undefined
+      readonly step?: string | undefined
+      readonly error?: string | undefined
+      readonly log: ReadonlyArray<string>
+      readonly startedAt?: number | undefined
+      readonly finishedAt?: number | undefined
+    }>
+  }
+}
+export type DevicePreviewRunAppOperation<E = never> = (
+  input: DevicePreviewRunAppInput,
+) => Effect.Effect<DevicePreviewRunAppOutput, E>
+
+export type DevicePreviewFocusInput = { readonly location?: { readonly directory?: string | undefined } | undefined }
+export type DevicePreviewFocusOutput = {
+  readonly location: Location.PublicRef
+  readonly data: {
+    readonly platforms: ReadonlyArray<"ios" | "android">
+    readonly framework?: "expo" | "react-native" | "native" | undefined
+    readonly bundler?:
+      | {
+          readonly framework: "expo" | "react-native" | "native"
+          readonly directory: string
+          readonly status: "starting" | "running" | "exited"
+          readonly command: string
+          readonly url?: string | undefined
+          readonly pid?: number | undefined
+          readonly exitCode?: number | undefined
+          readonly log: ReadonlyArray<string>
+        }
+      | undefined
+    readonly servers: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly status: "starting" | "running" | "exited"
+      readonly command: string
+      readonly url?: string | undefined
+      readonly pid?: number | undefined
+      readonly exitCode?: number | undefined
+      readonly log: ReadonlyArray<string>
+    }>
+    readonly builds: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly framework?: "expo" | "react-native" | "native" | undefined
+      readonly status: "idle" | "building" | "installing" | "launching" | "running" | "failed"
+      readonly directory?: string | undefined
+      readonly target?: string | undefined
+      readonly appID?: string | undefined
+      readonly device?: string | undefined
+      readonly step?: string | undefined
+      readonly error?: string | undefined
+      readonly log: ReadonlyArray<string>
+      readonly startedAt?: number | undefined
+      readonly finishedAt?: number | undefined
+    }>
+  }
+}
+export type DevicePreviewFocusOperation<E = never> = (
+  input?: DevicePreviewFocusInput,
+) => Effect.Effect<DevicePreviewFocusOutput, E>
+
+export type DevicePreviewStopAppInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly platform: "ios" | "android"
+}
+export type DevicePreviewStopAppOutput = {
+  readonly location: Location.PublicRef
+  readonly data: {
+    readonly platforms: ReadonlyArray<"ios" | "android">
+    readonly framework?: "expo" | "react-native" | "native" | undefined
+    readonly bundler?:
+      | {
+          readonly framework: "expo" | "react-native" | "native"
+          readonly directory: string
+          readonly status: "starting" | "running" | "exited"
+          readonly command: string
+          readonly url?: string | undefined
+          readonly pid?: number | undefined
+          readonly exitCode?: number | undefined
+          readonly log: ReadonlyArray<string>
+        }
+      | undefined
+    readonly servers: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly status: "starting" | "running" | "exited"
+      readonly command: string
+      readonly url?: string | undefined
+      readonly pid?: number | undefined
+      readonly exitCode?: number | undefined
+      readonly log: ReadonlyArray<string>
+    }>
+    readonly builds: ReadonlyArray<{
+      readonly platform: "ios" | "android"
+      readonly framework?: "expo" | "react-native" | "native" | undefined
+      readonly status: "idle" | "building" | "installing" | "launching" | "running" | "failed"
+      readonly directory?: string | undefined
+      readonly target?: string | undefined
+      readonly appID?: string | undefined
+      readonly device?: string | undefined
+      readonly step?: string | undefined
+      readonly error?: string | undefined
+      readonly log: ReadonlyArray<string>
+      readonly startedAt?: number | undefined
+      readonly finishedAt?: number | undefined
+    }>
+  }
+}
+export type DevicePreviewStopAppOperation<E = never> = (
+  input: DevicePreviewStopAppInput,
+) => Effect.Effect<DevicePreviewStopAppOutput, E>
+
+export interface DevicePreviewApi<E = never> {
+  readonly get: DevicePreviewGetOperation<E>
+  readonly start: DevicePreviewStartOperation<E>
+  readonly stop: DevicePreviewStopOperation<E>
+  readonly startBundler: DevicePreviewStartBundlerOperation<E>
+  readonly stopBundler: DevicePreviewStopBundlerOperation<E>
+  readonly runApp: DevicePreviewRunAppOperation<E>
+  readonly focus: DevicePreviewFocusOperation<E>
+  readonly stopApp: DevicePreviewStopAppOperation<E>
+}
+
 /** @deprecated Use `ExperimentalSessionStatsInput`. Removed in the next minor. */
 export type SessionStatsInput = ExperimentalSessionStatsInput
 
@@ -3065,6 +3469,7 @@ export interface AppApi<E = never> {
   readonly debug: DebugApi<E>
   readonly websearch: WebsearchApi<E>
   readonly config: ConfigApi<E>
+  readonly devicePreview: DevicePreviewApi<E>
 
   /** @deprecated Use `client.experimental.generate`. Removed in the next minor. */
   readonly generate: {
