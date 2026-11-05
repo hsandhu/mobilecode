@@ -25,7 +25,7 @@ export default {
   "error.install": "Gat ekki sett upp ytri netþjóninn. Athugaðu tengingar, pláss og að tar sé uppsett.",
   "error.unpublished":
     "Þessi skrifborðsútgáfa hefur engan birtan fjarþjón. Fyrir þróunarsmíðar, settu upp og ræstu V2 á hýsilinn, reyndu síðan aftur.",
-  "error.service": "SSH tengdur, en OpenCode þjónninn varð ekki tilbúinn.",
+  "error.service": "SSH tengdur, en MobileCode þjónninn varð ekki tilbúinn.",
   "error.host-key":
     "Ekki var hægt að staðfesta auðkenni gestgjafans. Staðfestu fingrafar þess áður en þú uppfærir SSH þekkta gestgjafa þína.",
   "error.ssh-missing": "OpenSSH fannst ekki. Settu upp OpenSSH viðskiptavin og tryggðu að ssh sé tiltækt á PATH.",

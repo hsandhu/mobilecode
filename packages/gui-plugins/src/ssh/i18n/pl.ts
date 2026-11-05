@@ -27,7 +27,7 @@ export default {
     "Nie udało się zainstalować zdalnego serwera. Sprawdź łączność, miejsce na dysku oraz czy tar jest zainstalowany.",
   "error.unpublished":
     "Ta wersja Desktop nie ma opublikowanego zdalnego serwera. W przypadku wersji deweloperskich zainstaluj i uruchom V2 na hoście, a następnie spróbuj ponownie.",
-  "error.service": "SSH połączony, ale serwer OpenCode nie stał się gotowy.",
+  "error.service": "SSH połączony, ale serwer MobileCode nie stał się gotowy.",
   "error.host-key":
     "Tożsamość hosta nie mogła zostać zweryfikowana. Zweryfikuj jego odcisk palca przed aktualizacją znanych hostów SSH.",
   "error.ssh-missing": "Nie znaleziono OpenSSH. Zainstaluj klienta OpenSSH i upewnij się, że ssh jest dostępne w PATH.",

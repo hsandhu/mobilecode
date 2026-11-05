@@ -27,7 +27,7 @@ export default {
     "Nem sikerült telepíteni a távoli kiszolgálót. Ellenőrizze a csatlakozást, a lemezterületet és a tar telepítését.",
   "error.unpublished":
     "Ennek az asztali verziónak nincs közzétett távoli kiszolgálója. Fejlesztési összeállításokhoz telepítse és indítsa el a V2-t a gazdagépen, majd próbálkozzon újra.",
-  "error.service": "A SSH csatlakozott, de a OpenCode szerver nem vált készenlétben.",
+  "error.service": "A SSH csatlakozott, de a MobileCode szerver nem vált készenlétben.",
   "error.host-key":
     "A házigazda személyazonosságát nem sikerült ellenőrizni. A SSH ismert gazdagépeinek frissítése előtt ellenőrizze az ujjlenyomatát.",
   "error.ssh-missing":

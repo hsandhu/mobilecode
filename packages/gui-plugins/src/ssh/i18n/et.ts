@@ -26,7 +26,7 @@ export default {
     "Kaugserverit ei saanud installida. Kontrollige ühenduvust, kettaruumi ja seda, kas tar on installitud.",
   "error.unpublished":
     "Sellel töölauaversioonil pole avaldatud kaugserverit. Arendusjärkude jaoks installige ja käivitage hostis V2, seejärel proovige uuesti.",
-  "error.service": "SSH on ühendatud, kuid server OpenCode ei saanud valmis.",
+  "error.service": "SSH on ühendatud, kuid server MobileCode ei saanud valmis.",
   "error.host-key":
     "Võõrustaja identiteeti ei õnnestunud kinnitada. Enne SSH teadaolevate hostide värskendamist kontrollige selle sõrmejälge.",
   "error.ssh-missing": "OpenSSH ei leitud. Installige OpenSSH klient ja veenduge, et ssh oleks PATH-il saadaval.",

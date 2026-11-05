@@ -27,7 +27,7 @@ export default {
     "Uzaq server quraşdırıla bilmədi. Bağlantını, disk boşluğunu və tar proqramının quraşdırıldığını yoxlayın.",
   "error.unpublished":
     "Bu Desktop versiyasının yayımlanmış uzaq serveri yoxdur. İnkişaf üçün olan build-lərdə hostda V2-ni quraşdırıb işə salın, sonra yenidən cəhd edin.",
-  "error.service": "SSH bağlantısı quruldu, lakin OpenCode serveri hazır vəziyyətə gəlmədi.",
+  "error.service": "SSH bağlantısı quruldu, lakin MobileCode serveri hazır vəziyyətə gəlmədi.",
   "error.host-key":
     "Serverin kimliyi təsdiqlənə bilmədi. SSH məlum hostlarını yeniləməzdən əvvəl onun barmaq izini təsdiqləyin.",
   "error.ssh-missing":

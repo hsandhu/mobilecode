@@ -26,7 +26,7 @@ export default {
     "Namestitev oddaljenega strežnika ni uspela. Preverite povezljivost, prostor na disku in ali je tar nameščen.",
   "error.unpublished":
     "Za to namizno različico ni objavljenega oddaljenega strežnika. Za razvojne različice namestite in zaženite V2 na gostitelju, nato poskusite znova.",
-  "error.service": "SSH povezan, vendar OpenCode strežnik ni postal pripravljen.",
+  "error.service": "SSH povezan, vendar MobileCode strežnik ni postal pripravljen.",
   "error.host-key":
     "Osebnosti gostitelja ni bilo mogoče preveriti. Pred posodobitvijo znanih gostiteljev SSH preverite njegov prstni odtis.",
   "error.ssh-missing": "OpenSSH ni bilo najdeno. Namestite OpenSSH odjemalec in zagotovite, da je ssh na PATH.",

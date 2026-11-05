@@ -22,7 +22,7 @@ export default {
   "error.version": "在连接之前，远程服务必须与此桌面版本匹配。",
   "error.install": "无法安装远程服务器。请检查连接性、磁盘空间，并确认已安装 tar。",
   "error.unpublished": "此桌面版本没有发布远程服务器。对于开发版本，请在主机上安装并启动 V2，然后重试。",
-  "error.service": "SSH 已连接，但 OpenCode 服务器未准备就绪。",
+  "error.service": "SSH 已连接，但 MobileCode 服务器未准备就绪。",
   "error.host-key": "无法验证主机的身份。在更新 SSH 已知主机之前，请验证其指纹。",
   "error.ssh-missing": "未找到 OpenSSH。请安装 OpenSSH 客户端，并确保 ssh 可在 PATH 中使用。",
   "action.authenticate": "验证",

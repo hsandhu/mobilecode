@@ -28,7 +28,7 @@ export default {
     "Der Remote-Server konnte nicht installiert werden. Überprüfen Sie die Konnektivität, den Speicherplatz und ob tar installiert ist.",
   "error.unpublished":
     "Diese Desktop-Version verfügt über keinen veröffentlichten Remote-Server. Installieren und starten Sie für Entwicklungs-Builds V2 auf dem Host und versuchen Sie es dann erneut.",
-  "error.service": "SSH ist verbunden, aber der OpenCode-Server ist nicht bereit.",
+  "error.service": "SSH ist verbunden, aber der MobileCode-Server ist nicht bereit.",
   "error.host-key":
     "Die Identität des Hosts konnte nicht überprüft werden. Überprüfen Sie den Fingerabdruck, bevor Sie Ihre bekannten SSH-Hosts aktualisieren.",
   "error.ssh-missing":

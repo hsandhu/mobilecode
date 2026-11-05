@@ -22,7 +22,7 @@ export default {
   "error.version": "遠端服務在連線前必須與此桌面版本相符。",
   "error.install": "無法安裝遠端伺服器。請檢查連線、磁碟空間，並確認已安裝 tar。",
   "error.unpublished": "此桌面版本沒有已發佈的遠端伺服器。對於開發版本，請在主機上安裝並啟動 V2，然後重試。",
-  "error.service": "SSH 已連線，但 OpenCode 伺服器未準備就緒。",
+  "error.service": "SSH 已連線，但 MobileCode 伺服器未準備就緒。",
   "error.host-key": "無法驗證主機的身分。在更新 SSH 已知主機前，請先驗證其指紋。",
   "error.ssh-missing": "未找到 OpenSSH。請安裝 OpenSSH 用戶端，並確保 ssh 可在 PATH 上使用。",
   "action.authenticate": "驗證",

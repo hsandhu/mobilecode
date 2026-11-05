@@ -26,7 +26,7 @@ export default {
   "error.install": "Kunne ikke installere den eksterne serveren. Sjekk tilkobling, diskplass og at tar er installert.",
   "error.unpublished":
     "Denne skrivebordsversjonen har ingen publisert ekstern server. For utviklingsbygg, installer og start V2 på verten, og prøv deretter på nytt.",
-  "error.service": "SSH koblet til, men OpenCode-serveren ble ikke klar.",
+  "error.service": "SSH koblet til, men MobileCode-serveren ble ikke klar.",
   "error.host-key":
     "Vertens identitet kunne ikke bekreftes. Bekreft fingeravtrykket før du oppdaterer de kjente vertene dine for SSH.",
   "error.ssh-missing":

@@ -27,7 +27,7 @@ export default {
     "Fjernserveren kunne ikke installeres. Tjek tilslutningsmuligheder, diskplads, og at tar er installeret.",
   "error.unpublished":
     "Denne desktopversion har ingen offentliggjort fjernserver. For udviklingsbuilds, installer og start V2 på værten, og prøv derefter igen.",
-  "error.service": "SSH tilsluttet, men OpenCode-serveren blev ikke klar.",
+  "error.service": "SSH tilsluttet, men MobileCode-serveren blev ikke klar.",
   "error.host-key":
     "Værtens identitet kunne ikke bekræftes. Bekræft dets fingeraftryk, før du opdaterer dine SSH kendte værter.",
   "error.ssh-missing":

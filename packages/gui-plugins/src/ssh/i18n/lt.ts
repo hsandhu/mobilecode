@@ -26,7 +26,7 @@ export default {
   "error.install": "Nepavyko įdiegti nuotolinio serverio. Patikrinkite ryšį, vietos diske ir ar įdiegta tar.",
   "error.unpublished":
     "Šioje darbalaukio versijoje nėra paskelbto nuotolinio serverio. Norėdami sukurti kūrimo versiją, įdiekite ir paleiskite V2 pagrindiniame kompiuteryje, tada bandykite dar kartą.",
-  "error.service": "SSH prisijungė, bet OpenCode serveris nepasiruošė.",
+  "error.service": "SSH prisijungė, bet MobileCode serveris nepasiruošė.",
   "error.host-key":
     "Nepavyko patvirtinti šeimininko tapatybės. Prieš atnaujindami žinomus SSH pagrindinius kompiuterius, patikrinkite jo pirštų atspaudus.",
   "error.ssh-missing": "OpenSSH nerastas. Įdiekite OpenSSH klientą ir įsitikinkite, kad ssh yra PATH.",

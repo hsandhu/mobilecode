@@ -27,7 +27,7 @@ export default {
     "Masofaviy serverni o‘rnatib bo‘lmadi. Ulanishni, disk maydonini va tar o'rnatilganligini tekshiring.",
   "error.unpublished":
     "Ushbu ish stoli versiyasida chop etilgan masofaviy server mavjud emas. Dasturiy tuzilmalar uchun V2 ni xostga oʻrnating va ishga tushiring, soʻngra qayta urinib koʻring.",
-  "error.service": "SSH ulandi, lekin OpenCode serveri tayyor emas.",
+  "error.service": "SSH ulandi, lekin MobileCode serveri tayyor emas.",
   "error.host-key":
     "Uy egasining shaxsini tekshirib bo‘lmadi. SSH ma'lum xostlarini yangilashdan oldin uning barmoq izini tekshiring.",
   "error.ssh-missing":

@@ -26,7 +26,7 @@ export default {
   "error.install": "Uzak sunucu yüklenemedi. Bağlantıyı, disk alanını ve tar'ın yüklü olup olmadığını kontrol edin.",
   "error.unpublished":
     "Bu Masaüstü sürümünde yayınlanmış bir uzak sunucu yok. Geliştirme derlemeleri için V2'yi ana makineye kurup başlatın ve ardından yeniden deneyin.",
-  "error.service": "SSH bağlandı ancak OpenCode sunucusu hazır olmadı.",
+  "error.service": "SSH bağlandı ancak MobileCode sunucusu hazır olmadı.",
   "error.host-key":
     "Toplantı sahibinin kimliği doğrulanamadı. Bilinen SSH ana bilgisayarlarınızı güncellemeden önce parmak izini doğrulayın.",
   "error.ssh-missing":

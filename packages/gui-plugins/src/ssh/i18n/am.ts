@@ -23,7 +23,7 @@ export default {
   "error.install": "የርቀት አገልጋዩን መጫን አልተቻለም። ግንኙነትን፣ የዲስክ ቦታን ያረጋግጡ እና ያ ሬንጅ መጫኑን ያረጋግጡ።",
   "error.unpublished":
     "ይህ የዴስክቶፕ ስሪት የታተመ የርቀት አገልጋይ የለውም። ለልማት ግንባታዎች በአስተናጋጁ ላይ V2 ን ይጫኑ እና ያስጀምሩ እና ከዚያ እንደገና ይሞክሩ።",
-  "error.service": "SSH ተገናኝቷል፣ ነገር ግን የOpenCode አገልጋዩ ዝግጁ አልሆነም።",
+  "error.service": "SSH ተገናኝቷል፣ ነገር ግን የMobileCode አገልጋዩ ዝግጁ አልሆነም።",
   "error.host-key": "የአስተናጋጁ ማንነት ሊረጋገጥ አልቻለም። የSSH የታወቁ አስተናጋጆችዎን ከማዘመንዎ በፊት የጣት አሻራውን ያረጋግጡ።",
   "error.ssh-missing": "OpenSSH አልተገኘም። የOpenSSH ደንበኛን ይጫኑ እና ssh በPATH ላይ መገኘቱን ያረጋግጡ።",
   "action.authenticate": "ያረጋግጡ",

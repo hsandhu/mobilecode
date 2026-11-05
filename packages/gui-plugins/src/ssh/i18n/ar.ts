@@ -24,7 +24,7 @@ export default {
   "error.install": "تعذر تثبيت الخادم البعيد. تحقق من الاتصال ومساحة القرص ومن تثبيت tar.",
   "error.unpublished":
     "لا يتوفر خادم بعيد منشور لإصدار تطبيق سطح المكتب هذا. لبنى التطوير، ثبّت V2 وشغّله على المضيف، ثم أعد المحاولة.",
-  "error.service": "اتصل SSH، لكن خادم OpenCode لم يصبح جاهزًا.",
+  "error.service": "اتصل SSH، لكن خادم MobileCode لم يصبح جاهزًا.",
   "error.host-key": "تعذر التحقق من هوية المضيف. تحقق من بصمته قبل تحديث قائمة مضيفي SSH المعروفين.",
   "error.ssh-missing": "لم يُعثر على OpenSSH. ثبّت عميل OpenSSH وتأكد من توفر ssh في PATH.",
   "action.authenticate": "مصادقة",

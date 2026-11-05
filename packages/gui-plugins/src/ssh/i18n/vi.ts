@@ -27,7 +27,7 @@ export default {
     "Không thể cài đặt máy chủ từ xa. Kiểm tra kết nối, dung lượng đĩa và việc tar đã được cài đặt chưa.",
   "error.unpublished":
     "Phiên bản Desktop này không có máy chủ từ xa đã công bố. Đối với bản phát triển, cài đặt và khởi động V2 trên máy chủ, sau đó thử lại.",
-  "error.service": "Đã kết nối SSH, nhưng máy chủ OpenCode chưa sẵn sàng.",
+  "error.service": "Đã kết nối SSH, nhưng máy chủ MobileCode chưa sẵn sàng.",
   "error.host-key":
     "Không thể xác minh danh tính của máy chủ. Xác minh dấu vân tay của nó trước khi cập nhật các máy chủ đã biết trong SSH của bạn.",
   "error.ssh-missing": "Không tìm thấy OpenSSH. Cài đặt một khách hàng OpenSSH và đảm bảo ssh có sẵn trên PATH.",

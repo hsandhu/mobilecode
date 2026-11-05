@@ -46,11 +46,9 @@ export function configureApplication() {
   const testRoot = createTestRoot()
   app.setPath("userData", testRoot ? path.join(testRoot, "desktop") : path.join(app.getPath("appData"), APP_ID))
 
-  if (testRoot) {
-    app.setPath("sessionData", path.join(testRoot, "session"))
+  app.setPath("sessionData", testRoot ? path.join(testRoot, "session") : path.join(app.getPath("userData"), "session"))
 
-    if (testOnboarding) app.setPath("documents", path.join(testRoot, "documents"))
-  }
+  if (testRoot && testOnboarding) app.setPath("documents", path.join(testRoot, "documents"))
 
   // V8 bytecode for the main bundle survives between launches, like the renderer's code cache.
   enableCompileCache(path.join(app.getPath("userData"), "compile-cache"))
@@ -65,7 +63,7 @@ export function acquireApplicationLock() {
 
 function createTestRoot() {
   const root = testOnboarding
-    ? path.join(tmpdir(), `opencode-onboarding-${randomUUID()}`)
+    ? path.join(tmpdir(), `mobilecode-onboarding-${randomUUID()}`)
     : process.env.OPENCODE_DESKTOP_TEST_ROOT
 
   if (!root) return undefined

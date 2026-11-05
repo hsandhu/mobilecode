@@ -27,7 +27,7 @@ export default {
     "Det gick inte att installera fjärrservern. Kontrollera anslutning, diskutrymme och att tar är installerat.",
   "error.unpublished":
     "Den här skrivbordsversionen har ingen publicerad fjärrserver. För utvecklingsbyggen, installera och starta V2 på värden och försök sedan igen.",
-  "error.service": "SSH ansluten, men OpenCode-servern blev inte klar.",
+  "error.service": "SSH ansluten, men MobileCode-servern blev inte klar.",
   "error.host-key":
     "Värdens identitet kunde inte verifieras. Verifiera dess fingeravtryck innan du uppdaterar dina kända SSH-värdar.",
   "error.ssh-missing":

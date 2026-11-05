@@ -28,7 +28,7 @@ export default {
     "Nu s-a putut instala serverul la distanță. Verificați conectivitatea, spațiul pe disc și dacă tar este instalat.",
   "error.unpublished":
     "Această versiune desktop nu are un server la distanță publicat. Pentru versiunile de dezvoltare, instalați și porniți V2 pe gazdă, apoi încercați din nou.",
-  "error.service": "SSH s-a conectat, dar serverul OpenCode nu a devenit gata.",
+  "error.service": "SSH s-a conectat, dar serverul MobileCode nu a devenit gata.",
   "error.host-key":
     "Identitatea gazdei nu a putut fi verificată. Verificați-i amprenta înainte de a actualiza gazdele cunoscute SSH.",
   "error.ssh-missing":

@@ -27,7 +27,7 @@ export default {
     "No s'ha pogut instal·lar el servidor remot. Comproveu la connectivitat, l'espai en disc i que el tar està instal·lat.",
   "error.unpublished":
     "Aquesta versió d'escriptori no té cap servidor remot publicat. Per a les compilacions de desenvolupament, instal·leu i inicieu la V2 a l'amfitrió i, a continuació, torneu-ho a provar.",
-  "error.service": "SSH s'ha connectat, però el servidor OpenCode no està preparat.",
+  "error.service": "SSH s'ha connectat, però el servidor MobileCode no està preparat.",
   "error.host-key":
     "No s'ha pogut verificar la identitat de l'amfitrió. Verifiqueu la seva empremta digital abans d'actualitzar els vostres amfitrions coneguts SSH.",
   "error.ssh-missing":

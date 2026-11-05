@@ -27,7 +27,7 @@ export default {
     "Kan de externe server niet installeren. Controleer de connectiviteit, schijfruimte en of tar is geïnstalleerd.",
   "error.unpublished":
     "Deze desktopversie heeft geen gepubliceerde externe server. Voor ontwikkelingsbuilds installeert en start u V2 op de host en probeert u het vervolgens opnieuw.",
-  "error.service": "SSH verbonden, maar de OpenCode-server is niet gereed geworden.",
+  "error.service": "SSH verbonden, maar de MobileCode-server is niet gereed geworden.",
   "error.host-key":
     "De identiteit van de host kon niet worden geverifieerd. Controleer de vingerafdruk voordat u uw bekende SSH-hosts bijwerkt.",
   "error.ssh-missing":

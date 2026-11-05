@@ -26,7 +26,7 @@ export default {
   "error.install": "Nevarēja instalēt attālo serveri. Pārbaudiet savienojumu, diska vietu un to, vai ir instalēta tar.",
   "error.unpublished":
     "Šai darbvirsmas versijai nav publicēta attālā servera. Izstrādes būvējumiem instalējiet un startējiet V2 resursdatorā, pēc tam mēģiniet vēlreiz.",
-  "error.service": "SSH ir izveidots savienojums, taču serveris OpenCode nebija gatavs.",
+  "error.service": "SSH ir izveidots savienojums, taču serveris MobileCode nebija gatavs.",
   "error.host-key":
     "Nevarēja pārbaudīt saimnieka identitāti. Pirms SSH zināmo saimniekdatoru atjaunināšanas pārbaudiet tā pirkstu nospiedumu.",
   "error.ssh-missing":

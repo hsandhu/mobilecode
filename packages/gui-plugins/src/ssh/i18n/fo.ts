@@ -26,7 +26,7 @@ export default {
   "error.install": "Kundi ikki seta fjar-ambætaran upp. Kanna samband, diskpláss, og at tar er sett upp.",
   "error.unpublished":
     "Hendan skriviborðsútgávan hevur ongan útgivnan fjarskiftis-ambætara. Til menningarbyggingar, installera og byrja V2 á vertinum, royn síðani aftur.",
-  "error.service": "SSH varð knýtt, men OpenCode ambætarin gjørdist ikki klárur.",
+  "error.service": "SSH varð knýtt, men MobileCode ambætarin gjørdist ikki klárur.",
   "error.host-key":
     "Samleikin hjá vertinum kundi ikki staðfestast. Staðfest fingramerkið áðrenn tú dagførir tínar SSH kendu vertir.",
   "error.ssh-missing": "OpenSSH varð ikki funnið. Set ein OpenSSH klient upp og tryggja tær at ssh er tøkt á PATH.",

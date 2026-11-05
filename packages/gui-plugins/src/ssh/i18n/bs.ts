@@ -27,7 +27,7 @@ export default {
     "Nije bilo moguće instalirati udaljeni server. Provjerite vezu, prostor na disku i je li tar instaliran.",
   "error.unpublished":
     "Ova verzija Desktopa nema objavljen udaljeni server. Za razvojne verzije instalirajte i pokrenite V2 na hostu, pa pokušajte ponovo.",
-  "error.service": "SSH je povezan, ali OpenCode server nije postao spreman.",
+  "error.service": "SSH je povezan, ali MobileCode server nije postao spreman.",
   "error.host-key":
     "Identitet hosta nije bilo moguće potvrditi. Provjerite njegov otisak prije ažuriranja poznatih SSH hostova.",
   "error.ssh-missing":

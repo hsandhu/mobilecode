@@ -1,4 +1,5 @@
 import http from "node:http"
+import { join } from "node:path"
 import { getCACertificates, setDefaultCACertificates } from "node:tls"
 import { app } from "electron"
 import { Effect, Path } from "effect"
@@ -36,6 +37,14 @@ export const preferApplicationEnvironment = Effect.gen(function* () {
       OPENCODE_EXPERIMENTAL_FILEWATCHER: "true",
       OPENCODE_CLIENT: "desktop",
     })
+    // MobileCode keeps its config, data and background service apart from any OpenCode install.
+    const root = app.getPath("userData")
+    Object.assign(process.env, {
+      XDG_DATA_HOME: join(root, "data"),
+      XDG_CONFIG_HOME: join(root, "config"),
+      XDG_CACHE_HOME: join(root, "cache"),
+      XDG_STATE_HOME: join(root, "state"),
+    })
   })
 })
 
@@ -44,7 +53,7 @@ export const prepareDesktop = Effect.gen(function* () {
   const paths = yield* DesktopPaths.resolve
 
   if (app.isPackaged || process.env.OPENCODE_DESKTOP_DISABLE_PROTOCOL_REGISTRATION !== "1")
-    app.setAsDefaultProtocolClient("opencode")
+    app.setAsDefaultProtocolClient("mobilecode")
   const runFork = Effect.runForkWith(yield* Effect.context())
   setProtocolReporter((level, message, data) =>
     runFork(scoped("protocol", level === "error" ? Effect.logError(message, data) : Effect.logWarning(message, data))),

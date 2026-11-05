@@ -25,7 +25,7 @@ export default {
   "error.install": "Etäpalvelinta ei voitu asentaa. Tarkista liitettävyys, levytila ​​ja että tarra on asennettu.",
   "error.unpublished":
     "Tällä työpöytäversiolla ei ole julkaistua etäpalvelinta. Kehityskoonnuksia varten asenna ja käynnistä V2 isännässä ja yritä sitten uudelleen.",
-  "error.service": "SSH yhdistetty, mutta OpenCode-palvelin ei tullut valmiiksi.",
+  "error.service": "SSH yhdistetty, mutta MobileCode-palvelin ei tullut valmiiksi.",
   "error.host-key":
     "Isännän henkilöllisyyttä ei voitu vahvistaa. Tarkista sen sormenjälki ennen kuin päivität tunnettuja SSH-isäntiäsi.",
   "error.ssh-missing": "OpenSSH ei löytynyt. Asenna OpenSSH-asiakas ja varmista, että ssh on saatavilla PATH:ssä.",

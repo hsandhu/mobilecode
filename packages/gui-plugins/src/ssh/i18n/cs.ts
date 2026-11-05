@@ -27,7 +27,7 @@ export default {
     "Vzdálený server se nepodařilo nainstalovat. Zkontrolujte připojení, místo na disku a instalaci programu tar.",
   "error.unpublished":
     "Pro tuto verzi aplikace Desktop není publikován vzdálený server. U vývojových sestavení nainstalujte a spusťte V2 na hostiteli a zkuste to znovu.",
-  "error.service": "SSH se připojilo, ale server OpenCode nebyl připraven.",
+  "error.service": "SSH se připojilo, ale server MobileCode nebyl připraven.",
   "error.host-key":
     "Identitu hostitele se nepodařilo ověřit. Před aktualizací známých hostitelů SSH ověřte jeho otisk.",
   "error.ssh-missing":

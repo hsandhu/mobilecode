@@ -27,7 +27,7 @@ export default {
     "Nije bilo moguće instalirati udaljeni poslužitelj. Provjerite vezu, prostor na disku i je li tar instaliran.",
   "error.unpublished":
     "Ova verzija Desktopa nema objavljen udaljeni poslužitelj. Za razvojne verzije instalirajte i pokrenite V2 na računalu domaćinu, pa pokušajte ponovno.",
-  "error.service": "SSH je povezan, ali OpenCode poslužitelj nije postao spreman.",
+  "error.service": "SSH je povezan, ali MobileCode poslužitelj nije postao spreman.",
   "error.host-key":
     "Identitet računala domaćina nije bilo moguće potvrditi. Provjerite njegov otisak prije ažuriranja poznatih SSH računalo domaćinova.",
   "error.ssh-missing":

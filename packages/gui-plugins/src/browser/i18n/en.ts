@@ -37,7 +37,7 @@ export default {
   "site.insecure": "Connection is not secure",
   "site.insecure.description": "Don't enter passwords or other private information on this page.",
   "site.local": "Local server",
-  "site.local.description": "Local addresses open on the machine that runs the OpenCode server.",
+  "site.local.description": "Local addresses open on the machine that runs the MobileCode server.",
   "site.file": "Workspace file",
   "site.file.description": "Only files inside this session's workspace can open here.",
   "site.network": "Pages load through the network of {{server}}.",

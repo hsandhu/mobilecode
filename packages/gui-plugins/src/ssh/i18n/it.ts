@@ -27,7 +27,7 @@ export default {
     "Impossibile installare il server remoto. Controlla la connettività, lo spazio su disco e che tar sia installato.",
   "error.unpublished":
     "Questa versione desktop non ha un server remoto pubblicato. Per le build di sviluppo, installa e avvia V2 sull'host, quindi riprova.",
-  "error.service": "SSH si è connesso, ma il server OpenCode non è pronto.",
+  "error.service": "SSH si è connesso, ma il server MobileCode non è pronto.",
   "error.host-key":
     "Non è stato possibile verificare l'identità dell'host. Verifica la sua impronta digitale prima di aggiornare i tuoi host conosciuti SSH.",
   "error.ssh-missing":

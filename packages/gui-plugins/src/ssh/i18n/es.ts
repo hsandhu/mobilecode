@@ -27,7 +27,7 @@ export default {
     "No se pudo instalar el servidor remoto. Verifique la conectividad, el espacio en disco y que tar esté instalado.",
   "error.unpublished":
     "Esta versión de escritorio no tiene ningún servidor remoto publicado. Para compilaciones de desarrollo, instale e inicie V2 en el host y luego vuelva a intentarlo.",
-  "error.service": "SSH se conectó, pero el servidor OpenCode no estuvo listo.",
+  "error.service": "SSH se conectó, pero el servidor MobileCode no estuvo listo.",
   "error.host-key":
     "No se pudo verificar la identidad del anfitrión. Verifique su huella digital antes de actualizar sus hosts conocidos SSH.",
   "error.ssh-missing":

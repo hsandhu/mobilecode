@@ -25,7 +25,7 @@ export default {
   "error.install": "원격 서버를 설치할 수 없습니다. 연결 상태, 디스크 공간 및 tar 설치 여부를 확인하세요.",
   "error.unpublished":
     "이 데스크톱 버전에는 게시된 원격 서버가 없습니다. 개발 빌드의 경우, 호스트에서 V2를 설치하고 시작한 후 다시 시도하세요.",
-  "error.service": "SSH에 연결되었지만 OpenCode 서버가 준비되지 않았습니다.",
+  "error.service": "SSH에 연결되었지만 MobileCode 서버가 준비되지 않았습니다.",
   "error.host-key":
     "호스트의 신원을 확인할 수 없습니다. SSH의 알려진 호스트 목록을 업데이트하기 전에 지문을 확인하세요.",
   "error.ssh-missing": "OpenSSH를 찾을 수 없습니다. OpenSSH 클라이언트를 설치하고 ssh가 PATH에 있는지 확인하세요.",

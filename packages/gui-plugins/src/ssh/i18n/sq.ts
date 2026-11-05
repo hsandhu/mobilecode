@@ -27,7 +27,7 @@ export default {
     "Serveri në distancë nuk mund të instalohej. Kontrolloni lidhjen, hapësirën në disk dhe nëse tar është instaluar.",
   "error.unpublished":
     "Ky version i desktopit nuk ka asnjë server të publikuar në distancë. Për ndërtimet e zhvillimit, instaloni dhe nisni V2 në host, më pas riprovoni.",
-  "error.service": "SSH u lidh, por serveri OpenCode nuk u bë gati.",
+  "error.service": "SSH u lidh, por serveri MobileCode nuk u bë gati.",
   "error.host-key":
     "Identiteti i hostit nuk mund të verifikohej. Verifiko gjurmën e gishtit të tij përpara se të përditësosh hostet e njohur SSH.",
   "error.ssh-missing":

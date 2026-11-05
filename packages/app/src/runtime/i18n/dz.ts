@@ -3,7 +3,7 @@ import en from "./en"
 type Keys = keyof typeof en
 
 export const dict = {
-  "desktop.menu.app": "OpenCode",
+  "desktop.menu.app": "MobileCode",
   "desktop.menu.file": "ཡིག༌སྣོད",
   "desktop.menu.edit": "ཞུན༌དག",
   "desktop.menu.view": "བསམ༌འཆར",
@@ -43,11 +43,11 @@ export const dict = {
   "desktop.menu.nextProject": "ལས་གཞི་རྗེས་མ།",
   "desktop.menu.minimize": "ཉུང་ཉུང་བཟོ།",
   "desktop.menu.maximize": "ཆེར་བསྐྱེད་འབད།",
-  "desktop.menu.documentation": "OpenCode ཡིག་ཆ།",
+  "desktop.menu.documentation": "MobileCode ཡིག་ཆ།",
   "desktop.menu.supportForum": "རྒྱབ་སྐྱོར་གླེང་སྟེགས།",
   "desktop.menu.shareFeedback": "བསམ་འཆར་བརྗེ་རེས།",
   "desktop.menu.reportBug": "རྐྱེན་ཅིག་སྙན་ཞུ་འབད།",
-  "desktop.menu.ariaLabel": "OpenCode དཀར་ཆག།",
+  "desktop.menu.ariaLabel": "MobileCode དཀར་ཆག།",
   "desktop.cli.installed.title": "CLI གཞི་བཙུགས་འབད་ཡོདཔ།",
   "desktop.cli.installed.message":
     "CLI འདི་ {{path}} ལུ་གཞི་བཙུགས་འབད་ཡི།\n\n'opencode2' བརྡ་བཀོད་ལག་ལེན་འཐབ་ནིའི་དོན་ལུ་ ཊར་མི་ནཱལ་ལོག་འགོ་བཙུགས།",
@@ -57,9 +57,9 @@ export const dict = {
   "desktop.recovery.action.exportLogs": "ཕྱིར་འདྲེན་དྲན་དེབ་ཚུ།",
   "desktop.recovery.action.keepWaiting": "བསྒུག་སྡོད།",
   "desktop.recovery.action.quit": "བཞག༌ནི",
-  "desktop.recovery.loadFailed": "OpenCode མངོན་གསལ་འབད་ནི་ལུ་འཐུས་ཤོར་བྱུང་ཡོདཔ།",
-  "desktop.recovery.terminated": "OpenCode སྒོ་སྒྲིག་འདི་ རེ་བ་མེད་པར་ མཇུག་བསྡུ་ཡོདཔ།",
-  "desktop.recovery.unresponsive": "OpenCodeགིས་ ལན་གསལ་འབད་མི་བཏུབ།",
+  "desktop.recovery.loadFailed": "MobileCode མངོན་གསལ་འབད་ནི་ལུ་འཐུས་ཤོར་བྱུང་ཡོདཔ།",
+  "desktop.recovery.terminated": "MobileCode སྒོ་སྒྲིག་འདི་ རེ་བ་མེད་པར་ མཇུག་བསྡུ་ཡོདཔ།",
+  "desktop.recovery.unresponsive": "MobileCodeགིས་ ལན་གསལ་འབད་མི་བཏུབ།",
   "desktop.recovery.unresponsive.detail":
     "ཁྱོད་ཀྱིས་གློག་རིམ་འདི་ལོག་སྟེ་འགོ་བཙུགས་ཚུགས། དྲན་ཐོ་ཚུ་ཁ་ཕྱེ་ཚུགས། ཡང་ན་བསྒུག་སྡོད་ཚུགས།",
   "desktop.recovery.loadFailed.detail": "སྒོ་སྒྲིག་: {{window}}\nURL: {{url}}\nའཛོལ་བ་: {{code}} {{description}}",
@@ -163,7 +163,7 @@ export const dict = {
   "provider.connect.status.waiting": "གནང་བ་ལུ་སྒུག་སྡོདཔ་ཨིན།",
   "provider.connect.status.failed": "དབང་སྤྲོད་འཐུས་ཤོར་བྱུང་ཡོདཔ།: {{error}}",
   "provider.connect.apiKey.description":
-    "ཁྱོད་རའི་རྩིས་ཐོ་མཐུད་ནིའི་དོན་ལུ་ ཁྱོད་རའི་ {{provider}} API ལྡེ་མིག་བཙུགས་ཞིནམ་ལས་ OpenCode ནང་ལུ་ {{provider}} དཔེ་ཚད་ཚུ་ལག་ལེན་འཐབ།",
+    "ཁྱོད་རའི་རྩིས་ཐོ་མཐུད་ནིའི་དོན་ལུ་ ཁྱོད་རའི་ {{provider}} API ལྡེ་མིག་བཙུགས་ཞིནམ་ལས་ MobileCode ནང་ལུ་ {{provider}} དཔེ་ཚད་ཚུ་ལག་ལེན་འཐབ།",
   "provider.connect.apiKey.label": "{{provider}} APIལྡེ་མིག།",
   "provider.connect.apiKey.placeholder": "APIལྡེ་མིག།",
   "provider.connect.apiKey.required": "APIལྡེ་མིག་དགོས་མཁོ་ཡོད།",
@@ -302,7 +302,7 @@ export const dict = {
   "error.chain.modelNotFound": "དཔེ་ཚད་འཚོལ་མ་ཐོབ།: {{provider}}/{{model}}",
   "error.chain.checkConfig": "ཁྱོད་ཀྱི་རིམ་སྒྲིག་ (opencode.json) བྱིན་མི་/དཔེ་ཚད་མིང་ཚུ་ཞིབ་དཔྱད་འབད།",
   "error.chain.mcpFailed":
-    'MCP སར་བར་ "{{name}}" འཐུས་ཤོར་བྱུང་ཡོདཔ། དྲན་འཛིན་ OpenCode གིས་ ད་ལྟོ་ཡང་ MCP བདེན་བཤད་ལུ་རྒྱབ་སྐྱོར་མི་འབད།',
+    'MCP སར་བར་ "{{name}}" འཐུས་ཤོར་བྱུང་ཡོདཔ། དྲན་འཛིན་ MobileCode གིས་ ད་ལྟོ་ཡང་ MCP བདེན་བཤད་ལུ་རྒྱབ་སྐྱོར་མི་འབད།',
   "error.chain.providerAuthFailed": "བྱིན་མི་བདེན་བཤད་འཐུས་ཤོར་བྱུང་ཡོདཔ།({{provider}}): {{message}}",
   "error.chain.providerInitFailed":
     'བྱིན་མི་ "{{provider}}" འགོ་བཙུགས་ནི་ལུ་འཐུས་ཤོར་འབྱུང་ཡོདཔ། ངོ་རྟགས་དང་རིམ་སྒྲིག་ཞིབ་དཔྱད་འབད།',
@@ -406,16 +406,16 @@ export const dict = {
   "settings.general.section.notifications": "རིམ་ལུགས་བརྡ་བསྐུལ་ཚུ།",
   "settings.general.section.sounds": "སྒྲའི་ནུས་པ།",
   "settings.general.row.language.title": "སྐད༌ཡིག",
-  "settings.general.row.language.description": "OpenCodeགི་དོན་ལུ་ བཀྲམ་སྟོན་སྐད་ཡིག་བསྒྱུར་བཅོས་འབད།",
+  "settings.general.row.language.description": "MobileCodeགི་དོན་ལུ་ བཀྲམ་སྟོན་སྐད་ཡིག་བསྒྱུར་བཅོས་འབད།",
   "settings.general.row.shell.title": "ཊར་མི་ནཱལ་ Shell",
   "settings.general.row.shell.description": "ཊར་མི་ནཱལ་དང་ལས་ཚབ་ལག་ཆས་ཚུ་གིས་ལག་ལེན་འཐབ་མི་ Shell",
   "settings.general.row.shell.autoDefault": "རང་བཞིན་ (སྔོན་སྒྲིག)",
   "settings.general.row.shell.terminalOnly": "ཊར་མི་ནཱལ་རྐྱངམ་ཅིག།",
   "settings.general.row.colorScheme.title": "ཚོས་གཞིའི་འཆར་གཞི།",
   "settings.general.row.colorScheme.description":
-    "OpenCode གིས་ རིམ་ལུགས་དང་ འོད་ ཡང་ན་ གནགཔོ་གི་བརྗོད་དོན་ལུ་ རྗེས་སུ་འཇུག་ནི་ཨིན་ན་ གདམ་ཁ་རྐྱབས།",
+    "MobileCode གིས་ རིམ་ལུགས་དང་ འོད་ ཡང་ན་ གནགཔོ་གི་བརྗོད་དོན་ལུ་ རྗེས་སུ་འཇུག་ནི་ཨིན་ན་ གདམ་ཁ་རྐྱབས།",
   "settings.general.row.theme.title": "བརྗོད༌དོན",
-  "settings.general.row.theme.description": "OpenCodeའདི་བརྗོད་དོན་ག་དེ་སྦེ་ཡོདཔ་ཨིན་ན་སྲོལ་སྒྲིག་འབད།",
+  "settings.general.row.theme.description": "MobileCodeའདི་བརྗོད་དོན་ག་དེ་སྦེ་ཡོདཔ་ཨིན་ན་སྲོལ་སྒྲིག་འབད།",
   "settings.general.row.font.title": "ཨང་རྟགས་ཡིག་གཟུགས།",
   "settings.general.row.font.description": "གསང་གྲངས་སྡེབ་ཚན་ཚུ་ནང་ལག་ལེན་འཐབ་མི་ཡིག་གཟུགས་སྲོལ་སྒྲིག་འབད།",
   "settings.general.row.terminalFont.title": "ཊར་མི་ནཱལ་ཡིག་གཟུགས།",
@@ -563,7 +563,7 @@ export const dict = {
   "command.project.copyID": "ལས་གཞིའི་ཨའི་ཌི་འདྲ་བཤུས་འབད།",
   "command.session.copyID": "ལཱ་ཡུན་གྱི་ཨའི་ཌི་འདྲ་བཤུས་འབད།",
   "server.row.incompatible":
-    "སར་བར་འདི་གིས་ གློག་རིམ་འདི་དང་མཐུན་འགྱུར་མེད་པའི་ OpenCode {{version}} གཡོག་བཀོལ་དོ། འཕྲོ་མཐུད་ཀྱི་དོན་ལུ་ OpenCode V2 ལུ་ཡར་སེང་འབད།",
+    "སར་བར་འདི་གིས་ གློག་རིམ་འདི་དང་མཐུན་འགྱུར་མེད་པའི་ MobileCode {{version}} གཡོག་བཀོལ་དོ། འཕྲོ་མཐུད་ཀྱི་དོན་ལུ་ OpenCode V2 ལུ་ཡར་སེང་འབད།",
   "toast.session.copyID.failed.title": "ལཱ་ཡུན་གྱི་ཨའི་ཌི་འདྲ་བཤུས་འབད་མ་ཚུགས།",
   "toast.session.copyID.failed.description": "ལཱ་ཡུན་གྱི་ཨའི་ཌི་འདྲ་བཤུས་འབདཝ་ད་ འཛོལ་བ་ཅིག་བྱུང་ནུག།",
   "toast.project.copyID.failed.title": "ལས་གཞིའི་ཨའི་ཌི་འདྲ་བཤུས་འབད་མ་ཚུགས།",
@@ -573,7 +573,7 @@ export const dict = {
   "error.page.action.reload": "ཡང་བསྐྱར་མངོན་གསལ།",
   "session.error.incompatible": "སར་བར་ཐོན་རིམ་འདི་ལུ་རྒྱབ་སྐྱོར་མེད།",
   "session.error.incompatible.description":
-    "{{server}} གིས་ གློག་རིམ་འདི་དང་མཐུན་འགྱུར་མེད་པའི་ OpenCode {{version}} གཡོག་བཀོལ་དོ། འཕྲོ་མཐུད་ཀྱི་དོན་ལུ་ སར་བར་འདི་ OpenCode V2 ལུ་ཡར་སེང་འབད།",
+    "{{server}} གིས་ གློག་རིམ་འདི་དང་མཐུན་འགྱུར་མེད་པའི་ MobileCode {{version}} གཡོག་བཀོལ་དོ། འཕྲོ་མཐུད་ཀྱི་དོན་ལུ་ སར་བར་འདི་ OpenCode V2 ལུ་ཡར་སེང་འབད།",
   "session.background.moveInline": "གཡོག་བཀོལ་དོ་ཡོད་པའི་ལཱ་འདི་རྒྱབ་ཁར་སྤོ་ནིའི་དོན་ལུ་ {{keybind}} ཨེབ།",
   "command.session.background": "རྒྱབ་ཁར་སྤོ།",
   "settings.tab.preferences": "དགའ་གདམ་ཚུ།",
@@ -685,7 +685,7 @@ export const dict = {
   "settings.about.firstPublished": "འགོ་དང་པ་ ཡུ་ཨེས་ཨེ་གི་ མི་སོ་རི་ལུ་ དཔར་བསྐྲུན་འབད་ཡོདཔ།",
   "settings.about.firstIllustrated": "འགོ་དང་པ་ ཨིང་ལེནཌ་གི་ ལོན་ཌོན་ལུ་ པར་རིས་བཀོད་ཡོདཔ།",
   "settings.about.website": "www.opencode.ai",
-  "settings.about.description": "OpenCode, ཁ་ཕྱེ་ཡོད་པའི་ཐོན་ཁུངས་གསང་ཡིག་ལས་ཚབ་པ།",
+  "settings.about.description": "MobileCode, ཁ་ཕྱེ་ཡོད་པའི་ཐོན་ཁུངས་གསང་ཡིག་ལས་ཚབ་པ།",
   "settings.about.trademark": "OpenCode འདི་ Anomaly Innovations, Inc གི་ཐོ་བཀོད་ཚོང་རྟགས་ཅིག་ཨིན།",
   "settings.about.typeset": "ཨིན་ཊར་དང་ཨའི་བི་ཨེམ་པེལེགསི་མོ་ནོ་ནང་ཡིག་དཔར་གཞི་སྒྲིག།",
   "settings.about.tagline": "ཁྱོད་མེད་པར་ AI གིས་མཉེན་ཆས་ལེགས་ཤོམ་བཟོ་མི་ཐུབ།",
@@ -730,7 +730,7 @@ export const dict = {
   "server.connect.scan": "QR གསང་གྲངས་པར་བཤུས་",
   "server.connect.scan.description": "ཁྱོད་རའི་པར་ཆས་འདི་ opencode pair གིས་སྟོན་མི་ QR གསང་ཡིག་ལུ་སྟོན་དགོ།",
   "server.connect.scan.invalid":
-    "འདི་ OpenCode ཆ་སྒྲིག་ཨང་རྟགས་ཅིག་མེན། opencode pair གིས་སྟོན་ཡོད་པའི་ཨང་རྟགས་འདི་པར་བཤུས་འབད།",
+    "འདི་ MobileCode ཆ་སྒྲིག་ཨང་རྟགས་ཅིག་མེན། opencode pair གིས་སྟོན་ཡོད་པའི་ཨང་རྟགས་འདི་པར་བཤུས་འབད།",
   "server.connect.camera": "པར་ཆས་ཆ་སྒྲིག་འབད་དོ།",
   "server.connect.camera.starting": "པར་ཆས་ཁ་ཕྱེ་དོ...",
   "server.connect.mixedContent":
@@ -765,7 +765,7 @@ export const dict = {
     "ཝེབ་འཚོལ་ཞིབ་འབད་ནི་ལུ་ལག་ལེན་འཐབ་མི་ འཚོལ་ཞིབ་བྱིན་མི་ལས་ཚབ་ཚུ་སེལ་འཐུ་འབད།",
   "settings.projects.search.placeholder": "ལས་གཞི་འཚོལ་ཞིབ་",
   "project.settings.name.title": "ལས་འགུལ་གྱི་མིང་",
-  "project.settings.name.description": "ལས་འགུལ་འདི་གི་དོན་ལུ་ OpenCode ཡོངས་རྫོགས་ནང་སྟོན་ཡོད་པའི་མིང་།",
+  "project.settings.name.description": "ལས་འགུལ་འདི་གི་དོན་ལུ་ MobileCode ཡོངས་རྫོགས་ནང་སྟོན་ཡོད་པའི་མིང་།",
   "project.settings.icon.description": "གྲོས་འཆར་: ༡༢༨×༡༢༨px. གཟུགས་བརྙན་ཅིག་སྐྱེལ་བཙུགས་འབད་ནི་ལུ་ཨེབ་གཏང་ཡང་ན་འདྲུད།",
   "project.settings.color.description":
     "སྲོལ་སྒྲིག་གཟུགས་བརྙན་གཞི་སྒྲིག་མ་འབད་བའི་སྐབས་ལས་འགུལ་ངོས་དཔར་གྱི་དོན་ལུ་ལག་ལེན་འཐབ་ཡོདཔ་ཨིན།",
@@ -773,11 +773,11 @@ export const dict = {
   "project.settings.worktree.startup.hint.base": "གཞི་རྟེན་ལཱ་ཤིང་གི་དོན་ལུ་ $OPENCODE_WORKTREE_BASE ལག་ལེན་འཐབ།",
   "project.settings.worktree.startup.hint.new": "ལཱ་གི་ཤིང་གསརཔ་གི་དོན་ལུ་ $OPENCODE_WORKTREE_PATH ལག་ལེན་འཐབ།",
   "project.settings.extensions.empty.mcps.title": "ད་ལྟོ་ MCPs མེད།",
-  "project.settings.extensions.empty.mcps.description": "MCPs ལུ་ཐོབ་ཚུགས་པའི་ OpenCode འདི་ན་འབྱུངམ་ཨིན།",
+  "project.settings.extensions.empty.mcps.description": "MCPs ལུ་ཐོབ་ཚུགས་པའི་ MobileCode འདི་ན་འབྱུངམ་ཨིན།",
   "project.settings.extensions.empty.plugins.title": "ད་ལྟོ་པ་ལག་ཨིནསི་མེད།",
-  "project.settings.extensions.empty.plugins.description": "OpenCode ལུ་ཡོད་པའི་པ་ལག་ཨིན་ཚུ་ ནཱ་ལུ་འབྱུངམ་ཨིན།",
+  "project.settings.extensions.empty.plugins.description": "MobileCode ལུ་ཡོད་པའི་པ་ལག་ཨིན་ཚུ་ ནཱ་ལུ་འབྱུངམ་ཨིན།",
   "project.settings.extensions.empty.skills.title": "ད་ལྟོ་རིག་རྩལ་མེད།",
-  "project.settings.extensions.empty.skills.description": "OpenCode ལུ་ཡོད་པའི་རིག་རྩལ་ཚུ་ ནཱ་ལུ་འབྱུང་འོང་།",
+  "project.settings.extensions.empty.skills.description": "MobileCode ལུ་ཡོད་པའི་རིག་རྩལ་ཚུ་ ནཱ་ལུ་འབྱུང་འོང་།",
   "project.settings.extensions.lsp.configured": "རིམ་སྒྲིག་འབད་ཡོད་པའི་སྐད་ཡིག་སར་བར་ཚུ།",
   "project.settings.extensions.lsp.status.enabled": "རིམ་སྒྲིག་ནང་ལུ་ལྕོགས་ཅན་བཟོ་ཡོདཔ།",
   "project.settings.extensions.lsp.status.disabled": "རིམ་སྒྲིག་ནང་ལུ་ལྕོགས་མིན་བཟོ་ཡོདཔ།",
@@ -799,7 +799,7 @@ export const dict = {
   "settings.timeline.collapsed.label": "{{activity}} རྡིབ་སོང་",
   "session.new.workspace.search.empty": "མཐུན་སྒྲིག་ལཱ་ཤིང་མེད།",
   "settings.workspaces.description": "ལཱ་གི་ཤིང་ཚུ་བསྐྱར་ཞིབ་འབད་དེ་ ཌིཀསི་ལག་ལེན་འཛིན་སྐྱོང་འཐབ།",
-  "settings.workspaces.empty.description": "OpenCode ནང་གསར་བསྐྲུན་འབད་ཡོད་པའི་ལཱ་ཤིང་ཚུ་ ནཱ་ལུ་འབྱུངམ་ཨིན།",
+  "settings.workspaces.empty.description": "MobileCode ནང་གསར་བསྐྲུན་འབད་ཡོད་པའི་ལཱ་ཤིང་ཚུ་ ནཱ་ལུ་འབྱུངམ་ཨིན།",
   "settings.workspaces.sessions.filtered.one": "{{count}} ལཱ་ཡུན་",
   "settings.workspaces.sessions.filtered.other": "{{count}} ལཱ་ཡུན་ཚུ་",
   "settings.workspaces.deleteAll.confirm.one":

@@ -26,7 +26,7 @@ export default {
   "error.install": "Uzak serweri gurup bolmady Baglanyşygy, disk ýerini barlaň we şol tar gurnalan.",
   "error.unpublished":
     "Bu iş stoly wersiýasynda çap edilen uzak serwer ýok. Ösüş gurmak üçin, hostda V2 guruň we işe giriziň, soňra gaýtadan synanyşyň.",
-  "error.service": "SSH birikdirildi, ýöne OpenCode serweri taýýar bolmady.",
+  "error.service": "SSH birikdirildi, ýöne MobileCode serweri taýýar bolmady.",
   "error.host-key":
     "Öý eýesiniň şahsyýetini tassyklap bolmady SSH belli öý eýeleriňizi täzelemezden ozal barmak yzyny barlaň.",
   "error.ssh-missing": "OpenSSH tapylmady OpenSSH müşderisini guruň we ssh-iň PATH-da elýeterlidigine göz ýetiriň.",

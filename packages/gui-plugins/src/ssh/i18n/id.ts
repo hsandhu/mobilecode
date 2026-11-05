@@ -27,7 +27,7 @@ export default {
     "Tidak dapat menginstal server jarak jauh. Periksa konektivitas, ruang disk, dan pastikan tar sudah terpasang.",
   "error.unpublished":
     "Versi Desktop ini tidak memiliki server jarak jauh yang diterbitkan. Untuk build pengembangan, pasang dan jalankan V2 di host, lalu coba lagi.",
-  "error.service": "SSH terhubung, tetapi server OpenCode tidak siap.",
+  "error.service": "SSH terhubung, tetapi server MobileCode tidak siap.",
   "error.host-key":
     "Identitas host tidak dapat diverifikasi. Verifikasi sidik jarinya sebelum memperbarui host SSH yang dikenal.",
   "error.ssh-missing": "OpenSSH tidak ditemukan. Pasang klien OpenSSH dan pastikan ssh tersedia di PATH.",

@@ -27,7 +27,7 @@ export default {
     "Impossible d'installer le serveur distant. Vérifiez la connectivité, l'espace disque et que tar est installé.",
   "error.unpublished":
     "Cette version de bureau n'a pas de serveur distant publié. Pour les versions de développement, installez et démarrez V2 sur l'hôte, puis réessayez.",
-  "error.service": "SSH s'est connecté, mais le serveur OpenCode n'est pas prêt.",
+  "error.service": "SSH s'est connecté, mais le serveur MobileCode n'est pas prêt.",
   "error.host-key":
     "L’identité de l’hôte n’a pas pu être vérifiée. Vérifiez son empreinte digitale avant de mettre à jour vos hôtes connus SSH.",
   "error.ssh-missing":
