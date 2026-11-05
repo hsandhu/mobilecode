@@ -36,7 +36,8 @@ concurrency: release-macos-${{ github.ref }}
 jobs:
   build:
     if: github.repository == 'hsandhu/mobilecode'
-    runs-on: macos-15
+    # The prod Icon Composer icon (resources/icons/icon.icon) needs actool from Xcode 26.
+    runs-on: macos-26
     timeout-minutes: 120
     env:
       # "latest" is the release channel for the CLI build and maps to the prod desktop identity.
