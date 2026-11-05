@@ -56,7 +56,7 @@ curl -fsSL https://raw.githubusercontent.com/hsandhu/mobilecode/main/install | b
 git clone https://github.com/hsandhu/mobilecode.git
 cd mobilecode
 bun install
-bun run --cwd packages/opencode src/index.ts
+bun run --cwd packages/cli src/index.ts
 ```
 
 The install script places the binary in `~/.mobilecode/bin` and adds it to your shell PATH.
@@ -69,12 +69,12 @@ MobileCode keeps opencode's configuration format and locations, so an existing `
 
 ```bash
 bun install
-bun run --cwd packages/opencode src/index.ts serve --port 4096   # backend
+bun run --cwd packages/cli src/index.ts serve --port 4096   # backend
 bun --cwd packages/app dev -- --port 4444                        # web UI at http://localhost:4444
 bun --cwd packages/desktop dev                                   # desktop app
 ```
 
-Run `bun typecheck` inside a package directory before sending changes. Tests run from package directories, for example `bun test` in `packages/opencode`.
+Run `bun typecheck` inside a package directory before sending changes. Tests run from package directories, for example `bun test` in `packages/core`.
 
 ### Building the macOS app
 
@@ -82,9 +82,9 @@ Run `bun typecheck` inside a package directory before sending changes. Tests run
 bun run build:macos
 ```
 
-One command: it installs dependencies, bundles the server, builds the Electron app and writes `MobileCode.app` plus a `.dmg` and `.zip` to `packages/desktop/dist`. It needs Node 20 or newer and picks a suitable version from nvm when the one on your PATH is older.
+One command: it installs dependencies, builds the bundled CLI, builds the Electron app and writes `MobileCode.app` plus a `.dmg` and `.zip` to `packages/desktop/dist`. It needs Node 20 or newer and picks a suitable version from nvm when the one on your PATH is older.
 
-The build is unsigned by default, so right-click the app and choose Open the first time. To ship a signed and notarized build, pass `--sign` with a Developer ID certificate in your keychain and `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER` set. Other options are `--arch arm64|x64|universal`, `--channel dev|beta|prod` and `--skip-install`; `--help` lists them.
+The build is unsigned by default, so right-click the app and choose Open the first time. To ship a signed and notarized build, pass `--sign` with a Developer ID certificate in your keychain and `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER` set. Other options are `--arch arm64|x64`, `--channel dev|beta|prod` and `--skip-install`; `--help` lists them.
 
 ### License
 

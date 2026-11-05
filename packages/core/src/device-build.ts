@@ -1,6 +1,6 @@
-export * as DeviceBuild from "./device-build"
+export * as DeviceBuild from "./device-build.js"
 
-import type { DevicePreview } from "@opencode-ai/schema/device-preview"
+import type { DevicePreview } from "@opencode/schema/device-preview"
 import { spawn, spawnSync, type ChildProcess } from "child_process"
 import launch from "cross-spawn"
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "fs"

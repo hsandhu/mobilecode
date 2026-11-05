@@ -1,7 +1,7 @@
-export * as DevicePreview from "./device-preview"
+export * as DevicePreview from "./device-preview.js"
 
 import { Schema } from "effect"
-import { NonNegativeInt, optional } from "./schema"
+import { NonNegativeInt, optional } from "./schema.js"
 
 export const Platform = Schema.Literals(["ios", "android"])
 export type Platform = typeof Platform.Type

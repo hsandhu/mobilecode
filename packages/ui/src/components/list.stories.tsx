@@ -61,6 +61,7 @@ export const Grouped = {
       { id: "a2", title: "Bravo", group: "Group A" },
       { id: "b1", title: "Delta", group: "Group B" },
     ]
+
     return (
       <mod.List items={items} key={(item) => item.id} groupBy={(item) => item.group} search={true}>
         {(item) => item.title}
@@ -73,6 +74,14 @@ export const Empty = {
   render: () => (
     <mod.List items={[]} key={(item) => item} search={true}>
       {(item) => item}
+    </mod.List>
+  ),
+}
+
+export const LoadFailed = {
+  render: () => (
+    <mod.List items={() => Promise.reject(new Error("offline"))} key={(item: string) => item} search={true}>
+      {(item: string) => item}
     </mod.List>
   ),
 }
@@ -156,6 +165,7 @@ export const GroupHeader = {
       { id: "a1", title: "Alpha", group: "Group A" },
       { id: "b1", title: "Beta", group: "Group B" },
     ]
+
     return (
       <mod.List
         items={items}

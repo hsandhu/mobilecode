@@ -1,0 +1,388 @@
+import { expect, test, type Page } from "@playwright/test"
+import {
+  REMOTE_SERVER,
+  SERVER,
+  expectPath,
+  holdRoute,
+  project,
+  seed,
+  session,
+  sessionHref,
+  type TabSeed,
+} from "../utils/app"
+import { mockServers, type MockServerConfig } from "../utils/mock-server"
+import { expectSessionTitle } from "../utils/waits"
+
+const directoryA = "C:/server-a"
+
+const directoryB = "/home/server-b"
+
+const sessionA = session({ id: "ses_server_a", directory: directoryA, title: "Server A session" })
+
+const childA = session({
+  id: "ses_server_a_child",
+  directory: directoryA,
+  title: "Server A child",
+  parentID: sessionA.id,
+})
+
+const sessionB = session({ id: "ses_server_b", directory: directoryB, title: "Server B session" })
+
+type Reply = { origin: string; sessionID: string; permissionID: string; body: unknown }
+
+test.use({ serviceWorkers: "block" })
+
+function pending(id: string, sessionID: string) {
+  return { id, sessionID, action: "shell", resources: ["git status"], metadata: {}, save: [] }
+}
+
+async function setup(
+  page: Page,
+  input: { tabs: TabSeed[]; a?: Partial<MockServerConfig>; b?: Partial<MockServerConfig> },
+) {
+  const replies: Reply[] = []
+  const lists: URL[] = []
+  const sessionGets: string[] = []
+  page.on("request", (request) => {
+    const url = new URL(request.url())
+
+    if (url.pathname === "/api/permission/request") lists.push(url)
+  })
+
+  const config = (origin: string, name: string, directory: string, sessions: ReturnType<typeof session>[]) => {
+    const id = name.toLowerCase().replace(" ", "-")
+
+    return {
+      directory,
+      project: project({ id: `proj_${id}`, directory }),
+      provider: {
+        all: [{ id, name: `${name} Provider`, models: { [id]: { id, name: `${name} Model` } } }],
+        connected: [id],
+        default: { providerID: id, modelID: id },
+      },
+      sessions,
+      pageMessages: () => ({ items: [] }),
+      sessionStatus: Object.fromEntries(sessions.map((item) => [item.id, { type: "running" }])),
+      strictDirectory: true,
+      onPermissionReply: (reply: Omit<Reply, "origin">) => replies.push({ origin, ...reply }),
+    }
+  }
+
+  const servers = await mockServers(page, {
+    [SERVER]: {
+      ...config(SERVER, "Server A", directoryA, [sessionA, childA]),
+      eventRetry: 20,
+      onSession: (id) => sessionGets.push(id),
+      ...input.a,
+    },
+    [REMOTE_SERVER]: { ...config(REMOTE_SERVER, "Server B", directoryB, [sessionB]), ...input.b },
+  })
+
+  await seed(page, { servers: [REMOTE_SERVER], tabs: input.tabs })
+
+  const listed = (origin: string, directory: string) =>
+    expect
+      .poll(() =>
+        lists.some((url) => url.origin === origin && url.searchParams.get("location[directory]") === directory),
+      )
+      .toBe(true)
+
+  return {
+    replies,
+    sessionGets,
+    transport: servers[SERVER]!.transport,
+    listed,
+    enableAutoAccept: () => enableAutoAccept(page),
+  }
+}
+
+async function enableAutoAccept(page: Page) {
+  await page.keyboard.press("Control+,")
+  const autoAccept = page.getByTestId("settings-screen").locator('[data-action="settings-auto-accept-permissions"]')
+  await autoAccept.locator('[data-slot="switch-control"]').click()
+  await expect(autoAccept.getByRole("switch")).toBeChecked()
+}
+
+async function chooseProjectAutoAccept(page: Page, project: string, current: string, choice: "On" | "Off") {
+  const settings = page.getByTestId("settings-screen")
+  await settings.getByRole("tab", { name: "Projects", exact: true }).click()
+  await settings.getByRole("button", { name: project, exact: true }).click()
+  const autoAccept = settings.locator('[data-action="settings-project-auto-accept-permissions"]')
+  await expect(autoAccept).toHaveText(current)
+  await autoAccept.click()
+  await page.getByRole("option", { name: choice, exact: true }).click()
+  await expect(autoAccept).toHaveText(choice)
+  await settings.getByRole("button", { name: "Back to projects", exact: true }).click()
+}
+
+const reply = (sessionID: string, permissionID: string) => ({
+  origin: SERVER,
+  sessionID,
+  permissionID,
+  body: { decision: "once" },
+})
+
+test("settings opened from a remote session sweep every server and keep the remote scope", async ({ page }) => {
+  // Server A has no tab and is never visited: its pending request proves one toggle sweeps every connected server.
+  const view = await setup(page, { tabs: [], a: { permissions: [pending("permission-pending-a", sessionA.id)] } })
+  await page.goto(sessionHref(sessionB.id, REMOTE_SERVER))
+  await expectSessionTitle(page, sessionB.title)
+
+  await view.enableAutoAccept()
+  const settings = page.getByTestId("settings-screen")
+  await expect(page).toHaveURL("/settings")
+  await expect(page.locator('[data-titlebar-tab][data-active="true"]')).toHaveCount(0)
+  await expect(page.getByRole("dialog")).toHaveCount(0)
+  await view.listed(REMOTE_SERVER, directoryB)
+  await expect.poll(() => view.replies).toEqual([reply(sessionA.id, "permission-pending-a")])
+
+  // Per-server pages start on the server of the tab settings opened from.
+  await settings.getByRole("tab", { name: "Models", exact: true }).click()
+  await expect(settings.getByRole("button", { name: "Server 127.0.0.1:4097", exact: true })).toBeVisible()
+  await expect(settings.getByRole("switch", { name: "Server B Model" })).toBeEnabled()
+  await expect(settings.getByRole("switch", { name: "Server A Model" })).toHaveCount(0)
+  await settings.getByRole("button", { name: "Back to app" }).click()
+  await expect(settings).toBeHidden()
+  await expectPath(page, sessionHref(sessionB.id, REMOTE_SERVER))
+  await expect(page.locator('[data-titlebar-tab][data-active="true"]')).toContainText(sessionB.title)
+  await page.keyboard.press("Control+]")
+  await expect(page).toHaveURL("/settings?tab=models")
+  await expect(settings.getByRole("tab", { name: "Models", exact: true })).toHaveAttribute("aria-selected", "true")
+  await page.keyboard.press("Escape")
+  await expectPath(page, sessionHref(sessionB.id, REMOTE_SERVER))
+  await expectSessionTitle(page, sessionB.title)
+})
+
+test("a remote session whose server signed the app out asks to sign in again, then opens", async ({ page }) => {
+  // The saved password is stale; the server's pairing link signs the app in again at the same address.
+  await setup(page, {
+    tabs: [],
+    b: { password: "session-token", pairing: { code: "one-time-code", token: "session-token" } },
+  })
+  await seed(page, {
+    storage: {
+      "opencode.global.dat:server": {
+        list: [{ type: "http", http: { url: REMOTE_SERVER, password: "old-password" } }],
+      },
+    },
+  })
+  await page.goto(sessionHref(sessionB.id, REMOTE_SERVER))
+
+  const signedOut = page.getByText("Signed out of this server", { exact: true })
+  await expect(signedOut).toBeVisible()
+  await page.getByRole("button", { name: "Sign in again", exact: true }).click()
+  const editor = page.getByRole("dialog", { name: "Edit server" })
+
+  // An empty address explains itself instead of closing the dialog.
+  await editor.getByRole("button", { name: "Use password", exact: true }).click()
+  await editor.getByLabel("Server address", { exact: true }).fill("")
+  await editor.getByRole("button", { name: "Save", exact: true }).click()
+  await expect(editor.getByRole("alert")).toHaveText("Enter a valid HTTP or HTTPS server address.")
+  await editor.getByRole("button", { name: "Use pairing link", exact: true }).click()
+
+  await editor.getByLabel("Pairing link", { exact: true }).fill(`${REMOTE_SERVER}/auth/connect/one-time-code`)
+  await editor.getByRole("button", { name: "Save", exact: true }).click()
+
+  await expect(editor).toHaveCount(0)
+  await expectSessionTitle(page, sessionB.title)
+  await expect(signedOut).toHaveCount(0)
+})
+
+// The session route waits this long for an uncached session before it calls the server unreachable.
+const RESOLUTION_TIMEOUT_MS = 30_000
+
+// How often the app checks each server's health.
+const SERVER_HEALTH_POLL_MS = 10_000
+
+test("a session its server never answers for says the server is unreachable, then opens", async ({ page }) => {
+  const late = session({ id: "ses_server_a_late", directory: directoryA, title: "Late session" })
+  const sessions = [sessionA]
+  await setup(page, { tabs: [], a: { sessions } })
+  const metadata = await holdRoute(page, new RegExp(`/api/session/${late.id}(\\?|$)`), { method: "GET" })
+  await page.clock.install()
+  await page.goto(sessionHref(late.id))
+  await metadata.arrived
+  const unreachable = page.getByText("Can't reach this server", { exact: true })
+  await expect(unreachable).toHaveCount(0)
+
+  await page.clock.fastForward(RESOLUTION_TIMEOUT_MS)
+  await expect(unreachable).toBeVisible()
+  await expect(page.getByRole("button", { name: "Close Tab", exact: true })).toBeVisible()
+
+  // The request that hung still fills the cache when it answers.
+  sessions.push(late)
+  metadata.release()
+  await expectSessionTitle(page, late.title)
+  await expect(unreachable).toHaveCount(0)
+})
+
+// The inbox shows what it has once this long passes, even while a server still has not answered.
+const INBOX_SETTLE_TIMEOUT_MS = 10_000
+
+test("one server that never answers the inbox index does not hide the other server's sessions", async ({ page }) => {
+  await setup(page, { tabs: [] })
+  await seed(page, { settings: { appearance: { tabLayout: "inbox" } } })
+
+  const index = await holdRoute(page, new RegExp(`^${REMOTE_SERVER}/api/session\\?(.*&)?order=desc`), {
+    method: "GET",
+  })
+
+  await page.clock.install()
+  await page.goto("/")
+  await index.arrived
+
+  const inbox = page.locator('[data-slot="sidebar-inbox"]')
+  const row = inbox.locator('[data-slot="sidebar-inbox-item"]').filter({ hasText: sessionA.title })
+  await expect(inbox).toHaveAttribute("aria-busy", "true")
+  await expect(row).toHaveCount(0)
+
+  await page.clock.fastForward(INBOX_SETTLE_TIMEOUT_MS)
+  await expect(inbox).toHaveAttribute("aria-busy", "false")
+  await expect(row).toBeVisible()
+})
+
+test("an open session stays visible while its server stops answering", async ({ page }) => {
+  const late = session({ id: "ses_server_a_late", directory: directoryA, title: "Late session" })
+  await setup(page, { tabs: [sessionA.id, late.id], a: { sessions: [sessionA] } })
+  await holdRoute(page, new RegExp(`/api/session/${late.id}(\\?|$)`), { method: "GET" })
+  await page.clock.install()
+  await page.goto(sessionHref(sessionA.id))
+  await expectSessionTitle(page, sessionA.title)
+
+  await page.route(`${SERVER}/api/info`, (route) => route.fulfill({ status: 503, body: "" }))
+  await page.clock.fastForward(SERVER_HEALTH_POLL_MS)
+  const unreachable = page.getByText("Can't reach this server", { exact: true })
+
+  // An uncached session on the same server proves the app now considers the server down.
+  await page.locator(`[data-titlebar-tab-slot]:has(a[href="${sessionHref(late.id)}"])`).click()
+  await expect(unreachable).toBeVisible()
+
+  await page.locator(`[data-titlebar-tab-slot]:has(a[href="${sessionHref(sessionA.id)}"])`).click()
+  await expectSessionTitle(page, sessionA.title)
+  await expect(unreachable).toHaveCount(0)
+})
+
+test("auto-accept responds for an unfocused server session and its child", async ({ page }) => {
+  const view = await setup(page, { tabs: [sessionA.id, { session: sessionB.id, server: REMOTE_SERVER }] })
+  await page.goto(sessionHref(sessionA.id))
+  await expectSessionTitle(page, sessionA.title)
+  await view.enableAutoAccept()
+  await view.listed(SERVER, directoryA)
+  await page.keyboard.press("Escape")
+
+  await page.locator(`[data-titlebar-tab-slot]:has(a[href="${sessionHref(sessionB.id, REMOTE_SERVER)}"])`).click()
+  await expectSessionTitle(page, sessionB.title)
+  await view.transport.waitForConnection()
+
+  for (const [index, item] of [sessionA, childA].entries()) {
+    await view.transport.send({
+      id: `evt_permission_background_${index}`,
+      created: 1700000001000 + index,
+      type: "permission.asked",
+      location: { directory: directoryA },
+      data: { ...pending(`permission-background-${index}`, item.id) },
+    })
+  }
+
+  await expect
+    .poll(() => view.replies)
+    .toEqual([reply(sessionA.id, "permission-background-0"), reply(childA.id, "permission-background-1")])
+})
+
+test("auto-accept sweeps again after a reconnect and resyncs active sessions", async ({ page }) => {
+  const queued: ReturnType<typeof pending>[] = []
+  const failures = { next: 0 }
+
+  const view = await setup(page, {
+    tabs: [sessionA.id],
+    a: {
+      permissions: () => queued,
+      permissionListFailures: () => failures.next-- > 0,
+    },
+  })
+
+  await page.goto(sessionHref(sessionA.id))
+  await expectSessionTitle(page, sessionA.title)
+  const first = await view.transport.waitForConnection()
+  await view.enableAutoAccept()
+  await view.listed(SERVER, directoryA)
+  await page.keyboard.press("Escape")
+
+  // Asked while the client is disconnected, so only a reconnect sweep finds it. The first listing after the
+  // reconnect fails, so only the bounded sweep retry can deliver the reply.
+  queued.push(pending("permission-offline-a", sessionA.id))
+  failures.next = 1
+  const before = view.sessionGets.length
+  await view.transport.disconnect()
+  await view.transport.waitForConnection({ after: first.id })
+
+  await expect.poll(() => view.replies).toEqual([reply(sessionA.id, "permission-offline-a")])
+  expect(view.sessionGets.slice(before)).toContain(sessionA.id)
+})
+
+test("auto-accept approves a request discovered by opening a session", async ({ page }) => {
+  // Served only by the per-session permission list, never by a location sweep or an event.
+  const view = await setup(page, {
+    tabs: [sessionA.id],
+    a: { sessionPermissions: { [sessionA.id]: [pending("permission-synced-a", sessionA.id)] } },
+  })
+
+  await page.goto(sessionHref(sessionA.id))
+  await expectSessionTitle(page, sessionA.title)
+  await view.enableAutoAccept()
+  await expect.poll(() => view.replies).toEqual([reply(sessionA.id, "permission-synced-a")])
+})
+
+test("a project's auto-accept choice overrides the default in both directions", async ({ page }) => {
+  const api = session({ id: "ses_project_api", directory: "/work/api", title: "API session", projectID: "proj_api" })
+  const web = session({ id: "ses_project_web", directory: "/work/web", title: "Web session", projectID: "proj_web" })
+  const requests = { [api.id]: [pending("permission-api", api.id)], [web.id]: [pending("permission-web", web.id)] }
+  const replies: string[] = []
+  await mockServers(page, {
+    [SERVER]: {
+      directory: "/work/api",
+      project: project({ id: "proj_api", directory: "/work/api" }),
+      projects: [
+        project({ id: "proj_api", directory: "/work/api" }),
+        project({ id: "proj_web", directory: "/work/web" }),
+      ],
+      provider: { all: [], connected: [], default: {} },
+      sessions: [api, web],
+      pageMessages: () => ({ items: [] }),
+      sessionStatus: { [api.id]: { type: "running" }, [web.id]: { type: "running" } },
+      permissions: () => Object.values(requests).flat(),
+      sessionPermissions: requests,
+      onPermissionReply: (reply) => replies.push(reply.permissionID),
+    },
+  })
+  await seed(page, { tabs: [api.id, web.id], usedProjects: { local: ["proj_api", "proj_web"] } })
+  const dock = page.locator('[data-component="dock-prompt"][data-kind="permission"]')
+  const settings = page.getByTestId("settings-screen")
+
+  await page.goto(sessionHref(web.id))
+  await expectSessionTitle(page, web.title)
+  await expect(dock.getByText("git status")).toBeVisible()
+
+  // On for api while the default is off; off for web before the default turns on.
+  await page.keyboard.press("Control+,")
+  await chooseProjectAutoAccept(page, "api", "Use default (Off)", "On")
+  await expect.poll(() => replies).toEqual(["permission-api"])
+  await chooseProjectAutoAccept(page, "web", "Use default (Off)", "Off")
+  await settings.getByRole("tab", { name: "Preferences", exact: true }).click()
+  const autoAccept = settings.locator('[data-action="settings-auto-accept-permissions"]')
+  await autoAccept.locator('[data-slot="switch-control"]').click()
+  await expect(autoAccept.getByRole("switch")).toBeChecked()
+  await settings.getByRole("button", { name: "Back to app" }).click()
+
+  await expectSessionTitle(page, web.title)
+  await expect(dock.getByText("git status")).toBeVisible()
+  expect(replies).toEqual(["permission-api"])
+
+  // Back on the default, web follows it.
+  await page.keyboard.press("Control+,")
+  await settings.getByRole("tab", { name: "Projects", exact: true }).click()
+  await settings.getByRole("button", { name: "web", exact: true }).click()
+  await settings.locator('[data-action="settings-project-auto-accept-permissions"]').click()
+  await page.getByRole("option", { name: "Use default (On)" }).click()
+  await expect.poll(() => replies).toEqual(["permission-api", "permission-web"])
+})

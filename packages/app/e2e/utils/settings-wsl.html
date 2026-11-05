@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body style="margin: 0">
+    <!-- Sized like the app's root, so the app fills the window whatever the route renders. -->
+    <div id="root" style="display: flex; flex-direction: column; height: 100dvh"></div>
+    <script type="module">
+      import { mount } from "./settings-wsl.fixture.tsx"
+      const query = new URLSearchParams(location.search)
+      mount({
+        server: query.get("server"),
+        mode: query.get("mode"),
+        wsl: query.get("wsl"),
+        restart: query.get("restart"),
+        path: query.get("path"),
+        ssh: query.get("ssh"),
+        storage: query.get("storage"),
+        hold: query.get("hold"),
+        updater: query.get("updater"),
+      })
+    </script>
+  </body>
+</html>

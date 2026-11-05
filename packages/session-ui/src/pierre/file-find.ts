@@ -1,7 +1,19 @@
-import { createEffect, createSignal, onCleanup, onMount } from "solid-js"
+import { createEffect, createMemo, createSignal, onCleanup, onMount } from "solid-js"
 import { makeEventListener } from "@solid-primitives/event-listener"
 import { createResizeObserver } from "@solid-primitives/resize-observer"
-import { createStore } from "solid-js/store"
+import {
+  createFindHostRegistryState,
+  INITIAL_FILE_FIND_STATE,
+  selectShortcutHost,
+  transitionFileFind,
+  transitionFindHostRegistry,
+  viewFileFind,
+  type FileFindEffect,
+  type FileFindEvent,
+  type FileFindState,
+  type FindHostRegistryEffect,
+  type FindHostRegistryEvent,
+} from "./file-find-machine"
 
 export type FindHost = {
   element: () => HTMLElement | undefined
@@ -11,28 +23,45 @@ export type FindHost = {
   isOpen: () => boolean
 }
 
-const hosts = new Set<FindHost>()
-let target: FindHost | undefined
-let current: FindHost | undefined
+let registry = createFindHostRegistryState<FindHost>()
+
 let installed = false
 
-function isEditable(node: unknown): boolean {
+function dispatchRegistry(event: FindHostRegistryEvent<FindHost>) {
+  const next = transitionFindHostRegistry(registry, event)
+  registry = next.state
+  next.effects.forEach(runRegistry)
+}
+
+function runRegistry(effect: FindHostRegistryEffect<FindHost>) {
+  if (effect.type === "close-host") return effect.host.close()
+
+  clearHighlightFind()
+}
+
+function isEditable(node: EventTarget | null): boolean {
   if (!(node instanceof HTMLElement)) return false
+
   if (node.closest("[data-prevent-autofocus]")) return true
+
   if (node.isContentEditable) return true
+
   return /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(node.tagName)
 }
 
-function hostForNode(node: unknown) {
+function hostForNode(node: EventTarget | null) {
   if (!(node instanceof Node)) return
-  for (const host of hosts) {
+
+  for (const host of registry.hosts) {
     const el = host.element()
+
     if (el && el.isConnected && el.contains(node)) return host
   }
 }
 
 function installShortcuts() {
   if (installed) return
+
   if (typeof window === "undefined") return
   installed = true
 
@@ -40,36 +69,28 @@ function installShortcuts() {
     "keydown",
     (event) => {
       if (event.defaultPrevented) return
+
       if (isEditable(event.target)) return
 
       const mod = event.metaKey || event.ctrlKey
+
       if (!mod) return
 
       const key = event.key.toLowerCase()
-      if (key === "g") {
-        const host = current
-        if (!host || !host.isOpen()) return
-        event.preventDefault()
-        event.stopPropagation()
-        host.next(event.shiftKey ? -1 : 1)
-        return
-      }
 
-      if (key !== "f") return
+      if (key !== "f" && key !== "g") return
 
-      const active = current
-      if (active && active.isOpen()) {
-        event.preventDefault()
-        event.stopPropagation()
-        active.open()
-        return
-      }
+      const host = selectShortcutHost(
+        registry,
+        key,
+        () => hostForNode(document.activeElement) ?? hostForNode(event.target),
+      )
 
-      const host = hostForNode(document.activeElement) ?? hostForNode(event.target) ?? target ?? Array.from(hosts)[0]
       if (!host) return
-
       event.preventDefault()
       event.stopPropagation()
+
+      if (key === "g") return host.next(event.shiftKey ? -1 : 1)
       host.open()
     },
     { capture: true },
@@ -77,21 +98,23 @@ function installShortcuts() {
 }
 
 function clearHighlightFind() {
-  const api = (globalThis as { CSS?: { highlights?: { delete: (name: string) => void } } }).CSS?.highlights
+  const api = globalThis.CSS?.highlights
+
   if (!api) return
   api.delete("opencode-find")
   api.delete("opencode-find-current")
 }
 
 function supportsHighlights() {
-  const g = globalThis as unknown as { CSS?: { highlights?: unknown }; Highlight?: unknown }
-  return typeof g.Highlight === "function" && g.CSS?.highlights != null
+  return "Highlight" in globalThis && !!globalThis.CSS?.highlights
 }
 
 function scrollParent(el: HTMLElement): HTMLElement | undefined {
   let parent = el.parentElement
+
   while (parent) {
     const style = getComputedStyle(parent)
+
     if (style.overflowY === "auto" || style.overflowY === "scroll") return parent
     parent = parent.parentElement
   }
@@ -105,58 +128,171 @@ type CreateFileFindOptions = {
 
 export function createFileFind(opts: CreateFileFindOptions) {
   let input: HTMLInputElement | undefined
+  let focusFrame: number | undefined
   let overlayFrame: number | undefined
-  let mode: "highlights" | "overlay" = "overlay"
-  let hits: Range[] = []
+  let posFrame: number | undefined
+  let current: FileFindState = INITIAL_FILE_FIND_STATE
+  const queue: FileFindEvent[] = []
+  const [state, setState] = createSignal(current)
   const [overlayScroll, setOverlayScroll] = createSignal<HTMLElement[]>([])
 
-  const [state, setState] = createStore({
-    open: false,
-    query: "",
-    index: 0,
-    count: 0,
-    pos: { top: 8, right: 8 },
-  })
-  const open = () => state.open
-  const query = () => state.query
-  const index = () => state.index
-  const count = () => state.count
-  const pos = () => state.pos
+  const view = createMemo(() => viewFileFind(state()))
+  const open = createMemo(() => view().open)
+  const query = createMemo(() => view().query)
+  const index = createMemo(() => view().index)
+  const count = createMemo(() => view().count)
+  const pos = createMemo(() => view().pos)
 
-  const clearOverlayScroll = () => {
-    setOverlayScroll([])
+  const dispatch = (event: FileFindEvent) => {
+    queue.push(event)
+
+    // Effects dispatch scan results and highlight fallbacks while they run; the outer loop drains them next.
+    if (queue.length > 1) return
+
+    while (queue.length > 0) {
+      try {
+        const next = transitionFileFind(current, queue[0]!)
+
+        if (next.state !== current) {
+          current = next.state
+          setState(current)
+        }
+
+        next.effects.forEach(run)
+      } catch (error) {
+        console.error("File find transition failed", error)
+      } finally {
+        queue.shift()
+      }
+    }
+  }
+
+  const run = (effect: FileFindEffect) => {
+    try {
+      perform(effect)
+    } catch (error) {
+      console.error("File find effect failed", error)
+    }
+  }
+
+  const perform = (effect: FileFindEffect) => {
+    if (effect.type === "activate-host") return dispatchRegistry({ type: "host.activated", host })
+
+    if (effect.type === "deactivate-host") return dispatchRegistry({ type: "host.deactivated", host })
+
+    if (effect.type === "unregister-host") return dispatchRegistry({ type: "host.unregistered", host })
+
+    if (effect.type === "schedule-focus") {
+      focusFrame = requestAnimationFrame(() => {
+        focusFrame = undefined
+        dispatch({ type: "focus.frame", attempt: effect.attempt })
+      })
+
+      return
+    }
+
+    if (effect.type === "cancel-focus") return cancelFocus()
+
+    if (effect.type === "cancel-frames") {
+      cancelFocus()
+      cancelOverlay()
+
+      if (posFrame !== undefined) cancelAnimationFrame(posFrame)
+      posFrame = undefined
+
+      return
+    }
+
+    if (effect.type === "focus-input") {
+      input?.focus()
+      input?.select()
+
+      return
+    }
+
+    if (effect.type === "scan") {
+      const root = opts.getRoot()
+
+      // Without drawn rows there is nothing to search; the viewer refreshes find once its rows mount.
+      if (!root) return
+
+      dispatch({
+        type: "matches.measured",
+        attempt: effect.attempt,
+        matches: scan(root, effect.query),
+        cursor: effect.cursor,
+        scroll: effect.scroll,
+        preferredRenderer: supportsHighlights() ? "highlights" : "overlay",
+      })
+
+      return
+    }
+
+    if (effect.type === "render-marks") {
+      if (effect.renderer === "highlights") {
+        clearOverlay()
+        setOverlayScroll([])
+
+        if (!setHighlights(effect.matches, effect.index))
+          dispatch({ type: "highlights.failed", attempt: effect.attempt })
+
+        return
+      }
+
+      clearHighlightFind()
+      syncOverlayScroll()
+      scheduleOverlay()
+
+      return
+    }
+
+    if (effect.type === "clear-marks") {
+      clearHighlightFind()
+      clearOverlay()
+      setOverlayScroll([])
+
+      return
+    }
+
+    scrollToRange(effect.match)
+  }
+
+  const cancelFocus = () => {
+    if (focusFrame !== undefined) cancelAnimationFrame(focusFrame)
+    focusFrame = undefined
+  }
+
+  const cancelOverlay = () => {
+    if (overlayFrame !== undefined) cancelAnimationFrame(overlayFrame)
+    overlayFrame = undefined
   }
 
   const clearOverlay = () => {
+    // Cancel first: the overlay element is gone once the viewer unmounts, but its frame is not.
+    cancelOverlay()
     const el = opts.overlay()
+
     if (!el) return
-    if (overlayFrame !== undefined) {
-      cancelAnimationFrame(overlayFrame)
-      overlayFrame = undefined
-    }
     el.innerHTML = ""
   }
 
   const renderOverlay = () => {
-    if (mode !== "overlay") {
-      clearOverlay()
-      return
-    }
-
     const wrapper = opts.wrapper()
     const overlay = opts.overlay()
+
     if (!wrapper || !overlay) return
 
     clearOverlay()
-    if (hits.length === 0) return
+
+    if (current.status !== "open" || current.renderer !== "overlay" || current.matches.length === 0) return
 
     const base = wrapper.getBoundingClientRect()
-    const currentIndex = index()
     const frag = document.createDocumentFragment()
 
-    for (let i = 0; i < hits.length; i++) {
-      const range = hits[i]
-      const active = i === currentIndex
+    for (let i = 0; i < current.matches.length; i++) {
+      const range = current.matches[i]
+      const active = i === current.index
+
       for (const rect of Array.from(range.getClientRects())) {
         if (!rect.width || !rect.height) continue
 
@@ -169,7 +305,8 @@ export function createFileFind(opts: CreateFileFindOptions) {
         mark.style.borderRadius = "2px"
         mark.style.backgroundColor = active ? "var(--surface-warning-strong)" : "var(--surface-warning-base)"
         mark.style.opacity = active ? "0.55" : "0.35"
-        if (active) mark.style.boxShadow = "inset 0 0 0 1px var(--border-warning-base)"
+
+        if (active) mark.style.boxShadow = "inset 0 0 0 1px var(--v2-state-border-warning)"
         frag.appendChild(mark)
       }
     }
@@ -178,8 +315,8 @@ export function createFileFind(opts: CreateFileFindOptions) {
   }
 
   function scheduleOverlay() {
-    if (mode !== "overlay") return
-    if (!open()) return
+    if (current.status !== "open" || current.renderer !== "overlay") return
+
     if (overlayFrame !== undefined) return
 
     overlayFrame = requestAnimationFrame(() => {
@@ -189,7 +326,6 @@ export function createFileFind(opts: CreateFileFindOptions) {
   }
 
   const syncOverlayScroll = () => {
-    if (mode !== "overlay") return
     const root = opts.getRoot()
 
     const next = root
@@ -197,25 +333,18 @@ export function createFileFind(opts: CreateFileFindOptions) {
           (node): node is HTMLElement => node instanceof HTMLElement,
         )
       : []
-    const current = overlayScroll()
-    if (next.length === current.length && next.every((el, i) => el === current[i])) return
 
-    clearOverlayScroll()
+    const previous = overlayScroll()
+
+    if (next.length === previous.length && next.every((el, i) => el === previous[i])) return
+
     setOverlayScroll(next)
-  }
-
-  const clearFind = () => {
-    clearHighlightFind()
-    clearOverlay()
-    clearOverlayScroll()
-    hits = []
-    setState("count", 0)
-    setState("index", 0)
   }
 
   const positionBar = () => {
     if (typeof window === "undefined") return
     const wrapper = opts.wrapper()
+
     if (!wrapper) return
 
     const root = scrollParent(wrapper) ?? wrapper
@@ -223,25 +352,31 @@ export function createFileFind(opts: CreateFileFindOptions) {
     const title = parseFloat(getComputedStyle(root).getPropertyValue("--session-title-height"))
     const header = Number.isNaN(title) ? 0 : title
 
-    setState("pos", {
-      top: Math.round(rect.top) + header - 4,
-      right: Math.round(window.innerWidth - rect.right) + 8,
+    dispatch({
+      type: "position.updated",
+      pos: {
+        top: Math.round(rect.top) + header - 4,
+        right: Math.round(window.innerWidth - rect.right) + 8,
+      },
     })
   }
 
   const scan = (root: ShadowRoot, value: string) => {
     const needle = value.toLowerCase()
     const ranges: Range[] = []
+
     const cols = Array.from(root.querySelectorAll("[data-content] [data-line], [data-column-content]")).filter(
       (node): node is HTMLElement => node instanceof HTMLElement,
     )
 
     for (const col of cols) {
       const text = col.textContent
+
       if (!text) continue
 
       const hay = text.toLowerCase()
       let at = hay.indexOf(needle)
+
       if (at === -1) continue
 
       const nodes: Text[] = []
@@ -249,25 +384,32 @@ export function createFileFind(opts: CreateFileFindOptions) {
       const walker = document.createTreeWalker(col, NodeFilter.SHOW_TEXT)
       let node = walker.nextNode()
       let pos = 0
+
       while (node) {
         if (node instanceof Text) {
           pos += node.data.length
           nodes.push(node)
           ends.push(pos)
         }
+
         node = walker.nextNode()
       }
+
       if (nodes.length === 0) continue
 
       const locate = (offset: number) => {
         let lo = 0
         let hi = ends.length - 1
+
         while (lo < hi) {
           const mid = (lo + hi) >> 1
+
           if (ends[mid] >= offset) hi = mid
           else lo = mid + 1
         }
+
         const prev = lo === 0 ? 0 : ends[lo - 1]
+
         return { node: nodes[lo], offset: offset - prev }
       }
 
@@ -291,114 +433,40 @@ export function createFileFind(opts: CreateFileFindOptions) {
     el?.scrollIntoView({ block: "center", inline: "center" })
   }
 
-  const setHighlights = (ranges: Range[], currentIndex: number) => {
-    const api = (globalThis as unknown as { CSS?: { highlights?: any }; Highlight?: any }).CSS?.highlights
-    const Highlight = (globalThis as unknown as { Highlight?: any }).Highlight
-    if (!api || typeof Highlight !== "function") return false
+  const setHighlights = (ranges: readonly Range[], currentIndex: number) => {
+    const api = globalThis.CSS?.highlights
+
+    if (!api || !("Highlight" in globalThis)) return false
 
     api.delete("opencode-find")
     api.delete("opencode-find-current")
 
     const active = ranges[currentIndex]
+
     if (active) api.set("opencode-find-current", new Highlight(active))
 
     const rest = ranges.filter((_, i) => i !== currentIndex)
+
     if (rest.length > 0) api.set("opencode-find", new Highlight(...rest))
+
     return true
   }
 
-  const apply = (args?: { reset?: boolean; scroll?: boolean }) => {
-    if (!open()) return
+  const focus = () =>
+    dispatch({ type: "open.requested", preferredRenderer: supportsHighlights() ? "highlights" : "overlay" })
 
-    const value = query().trim()
-    if (!value) {
-      clearFind()
-      return
-    }
+  const close = () => dispatch({ type: "close.requested" })
 
-    const root = opts.getRoot()
-    if (!root) return
-
-    mode = supportsHighlights() ? "highlights" : "overlay"
-
-    const ranges = scan(root, value)
-    const total = ranges.length
-    const desired = args?.reset ? 0 : index()
-    const currentIndex = total ? Math.min(desired, total - 1) : 0
-
-    hits = ranges
-    setState("count", total)
-    setState("index", currentIndex)
-
-    const active = ranges[currentIndex]
-    if (mode === "highlights") {
-      clearOverlay()
-      clearOverlayScroll()
-      if (!setHighlights(ranges, currentIndex)) {
-        mode = "overlay"
-        clearHighlightFind()
-        syncOverlayScroll()
-        scheduleOverlay()
-      }
-      if (args?.scroll && active) scrollToRange(active)
-      return
-    }
-
-    clearHighlightFind()
-    syncOverlayScroll()
-    if (args?.scroll && active) scrollToRange(active)
-    scheduleOverlay()
-  }
-
-  const close = () => {
-    setState("open", false)
-    setState("query", "")
-    clearFind()
-    if (current === host) current = undefined
-  }
-
-  const focus = () => {
-    if (current && current !== host) current.close()
-    current = host
-    target = host
-    if (!open()) setState("open", true)
-    requestAnimationFrame(() => {
-      apply({ scroll: true })
-      input?.focus()
-      input?.select()
+  const next = (dir: 1 | -1) =>
+    dispatch({
+      type: "next.requested",
+      dir,
+      stale: current.status === "open" && current.matches.some((range) => !range.startContainer.isConnected),
     })
-  }
-
-  const next = (dir: 1 | -1) => {
-    if (!open()) return
-    const total = count()
-    if (total <= 0) return
-
-    const currentIndex = (index() + dir + total) % total
-    setState("index", currentIndex)
-
-    const active = hits[currentIndex]
-    if (!active) return
-
-    if (mode === "highlights") {
-      if (!setHighlights(hits, currentIndex)) {
-        mode = "overlay"
-        apply({ reset: true, scroll: true })
-        return
-      }
-      scrollToRange(active)
-      return
-    }
-
-    clearHighlightFind()
-    syncOverlayScroll()
-    scrollToRange(active)
-    scheduleOverlay()
-  }
 
   const host: FindHost = {
     element: opts.wrapper,
-    isOpen: () => open(),
+    isOpen: () => current.status === "open",
     next,
     open: focus,
     close,
@@ -409,42 +477,29 @@ export function createFileFind(opts: CreateFileFindOptions) {
   })
 
   onMount(() => {
-    mode = supportsHighlights() ? "highlights" : "overlay"
     installShortcuts()
-    hosts.add(host)
-    if (!target) target = host
-
-    onCleanup(() => {
-      hosts.delete(host)
-      if (current === host) {
-        current = undefined
-        clearHighlightFind()
-      }
-      if (target === host) target = undefined
-    })
+    dispatchRegistry({ type: "host.registered", host })
   })
 
   createEffect(() => {
     if (!open()) return
 
-    const update = () => positionBar()
-    requestAnimationFrame(update)
-    makeEventListener(window, "resize", update, { passive: true })
+    const update = () => {
+      posFrame = undefined
+      positionBar()
+    }
+
+    posFrame = requestAnimationFrame(update)
+    makeEventListener(window, "resize", positionBar, { passive: true })
 
     const wrapper = opts.wrapper()
+
     if (!wrapper) return
     const root = scrollParent(wrapper) ?? wrapper
-    createResizeObserver(root, update)
+    createResizeObserver(root, positionBar)
   })
 
-  onCleanup(() => {
-    clearOverlayScroll()
-    clearOverlay()
-    if (current === host) {
-      current = undefined
-      clearHighlightFind()
-    }
-  })
+  onCleanup(() => dispatch({ type: "disposed" }))
 
   return {
     open,
@@ -455,28 +510,25 @@ export function createFileFind(opts: CreateFileFindOptions) {
     setInput: (el: HTMLInputElement) => {
       input = el
     },
-    setQuery: (value: string) => {
-      setState("query", value)
-      setState("index", 0)
-      apply({ reset: true, scroll: true })
-    },
+    setQuery: (value: string) => dispatch({ type: "query.changed", query: value }),
     focus,
     close,
     next,
-    refresh: (args?: { reset?: boolean; scroll?: boolean }) => apply(args),
+    refresh: (args?: { reset?: boolean; scroll?: boolean }) =>
+      dispatch({ type: "refresh.requested", reset: !!args?.reset, scroll: !!args?.scroll }),
     onPointerDown: () => {
-      target = host
+      dispatchRegistry({ type: "host.preferred", host })
       opts.wrapper()?.focus({ preventScroll: true })
     },
-    onFocus: () => {
-      target = host
-    },
+    onFocus: () => dispatchRegistry({ type: "host.preferred", host }),
     onInputKeyDown: (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault()
         close()
+
         return
       }
+
       if (event.key !== "Enter") return
       event.preventDefault()
       next(event.shiftKey ? -1 : 1)

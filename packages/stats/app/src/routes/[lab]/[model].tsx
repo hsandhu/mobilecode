@@ -1,9 +1,9 @@
 import { Meta, Title } from "@solidjs/meta"
-import { ProviderIcon } from "@opencode-ai/ui/provider-icon"
+import { ProviderIcon } from "@opencode/ui/provider-icon"
 import { scaleSqrt } from "d3-scale"
 import countryCodesSource from "i18n-iso-countries/codes.json?raw"
-import { type CountryEntry, type ModelUsagePoint } from "@opencode-ai/stats-core/domain/home"
-import { statModel } from "@opencode-ai/stats-core/domain/model-normalization"
+import { type CountryEntry, type ModelUsagePoint } from "@opencode/stats-core/domain/home"
+import { statModel } from "@opencode/stats-core/domain/model-normalization"
 import { createAsync, query, useParams } from "@solidjs/router"
 import { createMemo, createSignal, createUniqueId, For, onMount, Show, type JSX } from "solid-js"
 import { getRequestEvent } from "solid-js/web"
@@ -13,6 +13,7 @@ import { LocaleLinks } from "../../component/locale-links"
 import { NotFoundMeta } from "../../component/not-found-meta"
 import { useI18n } from "../../context/i18n"
 import { useLanguage } from "../../context/language"
+import { dismissChartTooltipOnExit } from "../../lib/chart-tooltip"
 import { fromFirstUsage } from "../../lib/format"
 import { localizedUrl } from "../../lib/language"
 import { loadModelPage, type ModelPageData } from "../../lib/page-data"
@@ -434,14 +435,6 @@ function ModelHeroSparkline(props: { data: StatsModelPageData }) {
   )
 }
 
-function ChevronDownIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="none">
-      <path d="M5 6.5L8 9.5L11 6.5" stroke="currentColor" />
-    </svg>
-  )
-}
-
 function ModelOverview(props: { specs: ModelCatalogSpecs | null }) {
   const i18n = useI18n()
   const language = useLanguage()
@@ -652,6 +645,12 @@ function ModelTrendSection(props: {
   const activeLineMaskId = createUniqueId()
   const areaGradientId = createUniqueId()
   const [activeIndex, setActiveIndex] = createSignal<number>()
+  let chartRef: HTMLDivElement | undefined
+  dismissChartTooltipOnExit({
+    chart: () => chartRef,
+    open: () => activeIndex() !== undefined,
+    dismiss: () => setActiveIndex(undefined),
+  })
   const highlightBars = createMemo(() => props.highlightBars ?? true)
   const lineScale = 326 / 450
   const areaBottom = 100 / lineScale
@@ -698,6 +697,7 @@ function ModelTrendSection(props: {
         fallback={<ModelEmptyState title={props.emptyTitle} description={props.emptyDescription} />}
       >
         <div
+          ref={chartRef}
           data-component="model-usage-chart"
           data-variant="model-trend"
           data-highlight-bars={highlightBars() ? "true" : undefined}
@@ -1374,11 +1374,6 @@ function capitalizeLabel(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
-function formatRankMove(change: number) {
-  if (change > 0) return `+${change}`
-  return `${change}`
-}
-
 function formatHeroRank(rank: number | null) {
   if (rank === null) return "--"
   return String(rank).padStart(2, "0")
@@ -1411,14 +1406,6 @@ function sparklinePoints(values: number[]) {
 
 function formatSparklinePoint(value: number) {
   return Number(value.toFixed(2)).toString()
-}
-
-function formatModelRankMoveLabel(data: StatsModelPageData, i18n: ReturnType<typeof useI18n>) {
-  if (data.rank === null) return i18n.t("model.noUsageLastWeek")
-  if (data.previousRank === null) return i18n.t("model.newThisWeek")
-  const change = data.previousRank - data.rank
-  if (change === 0) return i18n.t("model.sameAsPreviousWeek")
-  return i18n.t("model.vsPreviousWeek", { change: formatRankMove(change) })
 }
 
 function formatTokens(value: number) {

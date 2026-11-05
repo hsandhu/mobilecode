@@ -1,5 +1,5 @@
 import { Meta, Title } from "@solidjs/meta"
-import { ProviderIcon } from "@opencode-ai/ui/provider-icon"
+import { ProviderIcon } from "@opencode/ui/provider-icon"
 import { scaleSqrt } from "d3-scale"
 import countryCodesSource from "i18n-iso-countries/codes.json?raw"
 import {
@@ -9,7 +9,7 @@ import {
   type SessionCostEntry,
   type TokenCostEntry,
   type UsagePoint,
-} from "@opencode-ai/stats-core/domain/home"
+} from "@opencode/stats-core/domain/home"
 import { createAsync, query } from "@solidjs/router"
 import { createEffect, createMemo, createSignal, For, onCleanup, onMount, Show, type JSX } from "solid-js"
 import { getRequestEvent } from "solid-js/web"
@@ -20,6 +20,7 @@ import { useI18n } from "../context/i18n"
 import { useLanguage } from "../context/language"
 import { isoDay } from "../lib/format"
 import { jsonUrl, localizedUrl, markdownUrl } from "../lib/language"
+import { dismissChartTooltipOnExit } from "../lib/chart-tooltip"
 import { methodologyItems } from "../lib/methodology"
 import { loadHomePage, type HomePageData } from "../lib/page-data"
 import { homeSummary } from "../lib/summaries"
@@ -461,6 +462,14 @@ function TopModelsChart(props: {
   const metric = createMemo(() => props.metric ?? "tokens")
 
   createEffect(() => scrollDenseChartToEnd(chartRef, props.range, props.data.length))
+  dismissChartTooltipOnExit({
+    chart: () => chartRef,
+    open: () => activeIndex() !== undefined,
+    dismiss: () => {
+      setActiveIndex(undefined)
+      props.onActiveModelChange(undefined)
+    },
+  })
 
   return (
     <>
@@ -851,7 +860,8 @@ function isDenseColumnRange(range: UsageRange) {
 function scrollDenseChartToEnd(element: HTMLDivElement | undefined, range: UsageRange, count: number) {
   if (!element || count <= 0 || !isDenseColumnRange(range) || typeof window === "undefined") return
   window.requestAnimationFrame(() => {
-    element.scrollLeft = Number.MAX_SAFE_INTEGER
+    // WebKit ignores out-of-range values like Number.MAX_SAFE_INTEGER, so scroll to the real end.
+    element.scrollLeft = element.scrollWidth
   })
 }
 
@@ -1009,6 +1019,7 @@ function LeaderboardCard(props: {
 function getProviderIconId(author: string) {
   if (author === "MiniMax") return "minimax"
   if (author === "Moonshot") return "moonshotai"
+  if (author === "Qwen") return "alibaba"
   if (author === "Zhipu") return "zhipuai"
   return author.toLowerCase()
 }
@@ -1108,6 +1119,14 @@ function MarketShare(props: {
   }
 
   createEffect(() => scrollDenseChartToEnd(chartRef, props.range, props.data.length))
+  dismissChartTooltipOnExit({
+    chart: () => chartRef,
+    open: () => props.inspecting,
+    dismiss: () => {
+      props.onInspectingChange(false)
+      props.onActiveAuthorChange(undefined)
+    },
+  })
 
   return (
     <>

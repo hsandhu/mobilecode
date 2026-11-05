@@ -1,9 +1,10 @@
 name: Release macOS
 
 # Builds the MobileCode desktop app for Apple silicon and attaches it to a GitHub release.
+# This is the only workflow MobileCode runs; upstream's CI, release and triage workflows are removed.
 #
 # Two ways to run it:
-#   - Push a tag matching packages/opencode/package.json.
+#   - Push a tag matching packages/desktop/package.json.
 #   - Run it manually. The workflow reads that version and creates the matching tag.
 #
 # The release is created as a draft so it can be reviewed, then published from the GitHub UI
@@ -36,12 +37,13 @@ jobs:
   build:
     if: github.repository == 'hsandhu/mobilecode'
     runs-on: macos-15
-    timeout-minutes: 90
+    timeout-minutes: 120
     env:
-      OPENCODE_CHANNEL: prod
+      # "latest" is the release channel for the CLI build and maps to the prod desktop identity.
+      OPENCODE_CHANNEL: latest
+      OPENCODE_TARGET: darwin-arm64
       MOBILECODE_UPDATER_ENABLED: "false"
       CSC_IDENTITY_AUTO_DISCOVERY: "false"
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
@@ -51,7 +53,7 @@ jobs:
         id: version
         run: |
           set -euo pipefail
-          PACKAGE_VERSION="$(node -p "require('./packages/opencode/package.json').version")"
+          PACKAGE_VERSION="$(node -p "require('./packages/desktop/package.json').version")"
           if [ "${{ github.event_name }}" = "push" ]; then
             VERSION="${GITHUB_REF_NAME#v}"
           else
@@ -62,7 +64,7 @@ jobs:
             exit 1
           fi
           if [ "$VERSION" != "$PACKAGE_VERSION" ]; then
-            echo "Release version $VERSION must match OpenCode version $PACKAGE_VERSION"
+            echo "Release version $VERSION must match the desktop version $PACKAGE_VERSION"
             exit 1
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
@@ -95,12 +97,10 @@ jobs:
           fi
           git checkout --detach "$TAG"
 
+      # Also sets up Node 24, which electron-builder needs.
       - uses: ./.github/actions/setup-bun
-
-      - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: "22"
+          install-flags: --os=darwin --cpu=arm64
 
       - name: Test desktop
         working-directory: packages/desktop
@@ -110,13 +110,21 @@ jobs:
         working-directory: packages/desktop
         run: bun typecheck
 
-      - name: Prepare
-        working-directory: packages/desktop
-        run: bun ./scripts/prepare.ts
+      - name: Test device preview
+        working-directory: packages/core
+        run: bun test test/device-build.test.ts test/device-preview.test.ts test/tool-device-run.test.ts
+
+      - name: Test device pane
+        working-directory: packages/gui-plugins
+        run: bun test src/device
+
+      - name: Build CLI
+        working-directory: packages/cli
+        run: bun run build && rm -rf dist/.bun
         env:
           OPENCODE_VERSION: ${{ steps.version.outputs.version }}
 
-      - name: Build
+      - name: Build desktop
         working-directory: packages/desktop
         run: bun run build
         env:
@@ -125,7 +133,9 @@ jobs:
 
       - name: Package
         working-directory: packages/desktop
-        run: bun x electron-builder --mac dmg --arm64 --publish never --config electron-builder.config.ts
+        run: bunx electron-builder --mac dmg --arm64 --publish never --config electron-builder.config.ts
+        env:
+          OPENCODE_VERSION: ${{ steps.version.outputs.version }}
 
       - name: Attach the app to the release
         working-directory: packages/desktop

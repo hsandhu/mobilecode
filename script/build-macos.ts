@@ -12,8 +12,7 @@ to packages/desktop/dist.
 
 Options:
   --channel <dev|beta|prod>  Release channel (default: prod)
-  --arch <arm64|x64|universal>
-                             Target architecture (default: this machine)
+  --arch <arm64|x64>         Target architecture (default: this machine)
   --sign                     Sign and notarize with your Developer ID.
                              Requires a certificate in your keychain and
                              APPLE_API_KEY, APPLE_API_KEY_ID and
@@ -50,8 +49,8 @@ if (!["dev", "beta", "prod"].includes(channel)) {
 }
 
 const arch = value("arch") ?? (os.arch() === "arm64" ? "arm64" : "x64")
-if (!["arm64", "x64", "universal"].includes(arch)) {
-  console.error(`--arch must be arm64, x64 or universal\n\n${usage}`)
+if (!["arm64", "x64"].includes(arch)) {
+  console.error(`--arch must be arm64 or x64\n\n${usage}`)
   process.exit(1)
 }
 
@@ -110,7 +109,10 @@ step("Checking tools")
 const node = ensureNode()
 console.log(`  node ${node}, bun ${Bun.version}, channel ${channel}, arch ${arch}`)
 
-process.env["OPENCODE_CHANNEL"] = channel
+// The CLI build calls its release channel "latest"; the desktop build maps that to the prod identity.
+process.env["OPENCODE_CHANNEL"] = channel === "prod" ? "latest" : channel
+process.env["OPENCODE_TARGET"] = `darwin-${arch}`
+process.env["OPENCODE_VERSION"] ??= (await Bun.file(path.join(desktop, "package.json")).json()).version
 process.env["MOBILECODE_UPDATER_ENABLED"] = args.includes("--sign") ? "true" : "false"
 if (!args.includes("--sign")) {
   // Ad-hoc signing only. Gatekeeper will ask on first launch.
@@ -122,15 +124,14 @@ if (!args.includes("--skip-install")) {
   await $`bun install`.cwd(root)
 }
 
-step("Preparing icons, metadata and the bundled server")
-await $`bun ./scripts/prebuild.ts`.cwd(desktop)
+step("Building the bundled CLI")
+await $`bun run build`.cwd(path.join(root, "packages", "cli"))
 
 step("Building the app bundle")
 await $`bun run build`.cwd(desktop)
 
 step("Packaging for macOS")
-const archFlag = arch === "universal" ? "--universal" : `--${arch}`
-await $`bun x electron-builder --mac ${archFlag} --publish never --config electron-builder.config.ts`.cwd(desktop)
+await $`bun x electron-builder --mac --${arch} --publish never --config electron-builder.config.ts`.cwd(desktop)
 
 step("Done")
 const dist = path.join(desktop, "dist")
