@@ -82,9 +82,9 @@ Run `bun typecheck` inside a package directory before sending changes. Tests run
 bun run build:macos
 ```
 
-One command: it installs dependencies, bundles the server, builds the Electron app and writes `MobileCode.app` plus a `.dmg` and `.zip` to `packages/desktop/dist`. It needs Node 20 or newer and picks a suitable version from nvm when the one on your PATH is older.
+One command: it installs dependencies, builds the bundled CLI, builds the Electron app and writes `MobileCode.app` plus a `.dmg` and `.zip` to `packages/desktop/dist`. It needs Node 20 or newer and picks a suitable version from nvm when the one on your PATH is older.
 
-The build is unsigned by default, so right-click the app and choose Open the first time. To ship a signed and notarized build, pass `--sign` with a Developer ID certificate in your keychain and `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER` set. Other options are `--arch arm64|x64|universal`, `--channel dev|beta|prod` and `--skip-install`; `--help` lists them.
+The build is unsigned by default, so right-click the app and choose Open the first time. To ship a signed and notarized build, pass `--sign` with a Developer ID certificate in your keychain and `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER` set. Other options are `--arch arm64|x64`, `--channel dev|beta|prod` and `--skip-install`; `--help` lists them.
 
 ### License
 
